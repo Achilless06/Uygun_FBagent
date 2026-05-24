@@ -1,0 +1,48 @@
+# Telegram bot
+aiogram==3.13.1
+
+# AI clients
+anthropic==0.40.0
+google-genai==2.4.0
+
+# HTTP for Meta Graph API
+requests==2.32.3
+
+# Scheduling
+APScheduler==3.10.4
+
+# Database
+SQLAlchemy==2.0.36
+
+# Catalog import
+openpyxl==3.1.5
+
+# Web server (brand landing site, runs alongside bot)
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+jinja2==3.1.4
+
+# Image generation (PIL text cards)
+Pillow==10.4.0
+
+# Web image search (DuckDuckGo, no API key)
+ddgs==9.14.4
+
+# Config
+python-dotenv==1.0.1
+
+# Logging
+structlog==24.4.0
+
+# Retries
+tenacity==9.0.0
+
+# Timezone support (used by APScheduler)
+tzdata==2024.2
+
+# Testing (dev)
+pytest==8.3.3
+pytest-asyncio==0.24.0
+
+# Linting (dev)
+ruff==0.7.4

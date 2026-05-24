@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card, post_card %}
+
+{% block body %}
+
+{% include "_hero.html" %}
+
+{# ─── Values strip ───────────────────────────────────────────────────────── #}
+<section id="below-hero" class="bg-white py-20 md:py-28">
+  <div class="max-w-7xl mx-auto px-6 md:px-8">
+    <div class="max-w-2xl">
+      <p class="text-xs font-semibold text-uygun-red tracking-[0.25em] uppercase mb-4">
+        {{ copy.VALUES_EYEBROW }}
+      </p>
+      <h2 class="text-3xl md:text-5xl font-semibold text-uygun-black leading-tight tracking-tight mb-6">
+        {{ copy.VALUES_TITLE_LINE_1 }}<br>
+        {{ copy.VALUES_TITLE_LINE_2 }}
+      </h2>
+      <p class="text-base md:text-lg text-uygun-grey leading-relaxed">
+        {{ copy.VALUES_INTRO }}
+      </p>
+    </div>
+
+    {% set value_cards = [
+      (copy.VALUE_1_TITLE, copy.VALUE_1_BODY),
+      (copy.VALUE_2_TITLE, copy.VALUE_2_BODY),
+      (copy.VALUE_3_TITLE, copy.VALUE_3_BODY),
+    ] %}
+    <div class="mt-16 grid md:grid-cols-3 gap-6">
+      {% for title, body in value_cards %}
+      <div class="group relative p-7 md:p-9 bg-gradient-to-br from-white to-uygun-light/40 rounded-2xl border border-uygun-black/[0.04] hover:border-uygun-red/30 hover:shadow-[0_30px_60px_-15px_rgba(188,18,21,0.18)] transition-all duration-500 hover:-translate-y-2 overflow-hidden">
+
+        {# Oversized faded numeral as decorative bg element. #}
+        <span class="absolute top-0 right-3 text-[7rem] md:text-[9rem] font-bold text-uygun-red/[0.06] leading-none select-none pointer-events-none tracking-tighter">
+          0{{ loop.index }}
+        </span>
+
+        <div class="relative">
+          <div class="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-uygun-red text-white text-sm font-bold mb-6 shadow-lg shadow-uygun-red/25">
+            {{ loop.index }}
+          </div>
+          <h3 class="text-xl font-semibold text-uygun-black mb-3 group-hover:text-uygun-red transition-colors tracking-tight">{{ title }}</h3>
+          <p class="text-sm text-uygun-grey leading-relaxed">{{ body }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ─── Featured products ─────────────────────────────────────────────────── #}
+<section class="bg-uygun-light py-20 md:py-28">
+  <div class="max-w-7xl mx-auto px-6 md:px-8">
+    <div class="flex items-end justify-between mb-10 md:mb-12">
+      <div>
+        <p class="text-xs font-semibold text-uygun-red tracking-[0.25em] uppercase mb-3">
+          {{ copy.FEATURED_EYEBROW }}
+        </p>
+        <h2 class="text-3xl md:text-5xl font-semibold text-uygun-black leading-tight tracking-tight">
+          {{ copy.FEATURED_TITLE }}
+        </h2>
+      </div>
+      <a href="/products"
+         class="hidden md:inline-flex items-center gap-2 text-sm font-semibold text-uygun-black hover:text-uygun-red transition-colors">
+        {{ copy.FEATURED_CTA }}
+        <span>→</span>
+      </a>
+    </div>
+
+    {% if featured %}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
+      {% for p in featured %}
+        {{ product_card(p) }}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-uygun-grey">პროდუქცია მალე გამოჩნდება.</p>
+    {% endif %}
+
+    <div class="mt-10 md:hidden text-center">
+      <a href="/products"
+         class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-uygun-black text-white font-semibold hover:bg-uygun-dark transition-colors">
+        {{ copy.FEATURED_CTA }} →
+      </a>
+    </div>
+  </div>
+</section>
+
+{# ─── Recent posts ──────────────────────────────────────────────────────── #}
+{% if latest_posts %}
+<section class="bg-white py-20 md:py-28">
+  <div class="max-w-7xl mx-auto px-6 md:px-8">
+    <div class="flex items-end justify-between mb-10 md:mb-12">
+      <div>
+        <p class="text-xs font-semibold text-uygun-red tracking-[0.25em] uppercase mb-3">
+          {{ copy.POSTS_EYEBROW }}
+        </p>
+        <h2 class="text-3xl md:text-5xl font-semibold text-uygun-black leading-tight tracking-tight">
+          {{ copy.POSTS_TITLE }}
+        </h2>
+      </div>
+      <a href="/posts"
+         class="hidden md:inline-flex items-center gap-2 text-sm font-semibold text-uygun-black hover:text-uygun-red transition-colors">
+        {{ copy.POSTS_CTA }}
+        <span>→</span>
+      </a>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 md:gap-8">
+      {% for p in latest_posts %}
+        {{ post_card(p) }}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ─── CTA strip ─────────────────────────────────────────────────────────── #}
+<section class="relative bg-uygun-black text-white py-20 md:py-32 overflow-hidden">
+  <div class="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-uygun-red/20 blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-uygun-red/10 blur-3xl pointer-events-none"></div>
+
+  <div class="relative max-w-4xl mx-auto px-6 md:px-8 text-center">
+    <p class="text-xs font-semibold text-uygun-red tracking-[0.25em] uppercase mb-5">
+      {{ copy.CTA_STRIP_EYEBROW }}
+    </p>
+    <h2 class="text-4xl md:text-6xl font-semibold leading-tight tracking-tight mb-6">
+      {{ copy.CTA_STRIP_TITLE_1 }}<br>
+      <span class="text-white/60">{{ copy.CTA_STRIP_TITLE_2 }}</span>
+    </h2>
+    <p class="text-lg text-white/80 max-w-2xl mx-auto mb-10">
+      {{ copy.CTA_STRIP_BODY }}
+    </p>
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+      <a href="tel:+995568909087"
+         class="px-7 py-3 rounded-full bg-uygun-red text-white font-semibold hover:bg-uygun-dark transition-colors shadow-lg">
+        📞 {{ contact_phone }}
+      </a>
+      <a href="https://wa.me/995568909087" target="_blank" rel="noopener"
+         class="px-7 py-3 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white font-semibold hover:bg-white/20 transition-colors">
+        💬 WhatsApp
+      </a>
+    </div>
+    <p class="mt-8 text-sm text-white/60">
+      📍 {{ contact_address }} · ორშ – შაბ, 10:00 – 19:00
+    </p>
+  </div>
+</section>
+
+{% endblock %}

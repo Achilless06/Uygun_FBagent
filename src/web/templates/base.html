@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Uygun Georgia — ვულკანიზაცია · ავტოქიმია · ხელსაწყოები{% endblock %}</title>
+  <meta name="description" content="{% block description %}ბათუმში დაფუძნებული ვულკანიზაციის, ავტოსამრეცხაოს ქიმიისა და ხელსაწყოების მომმარაგებელი. 480+ პროდუქტი მარაგში. უფასო მიწოდება საქართველოს მასშტაბით.{% endblock %}">
+  <link rel="icon" type="image/png" href="/assets/brand/logo.png">
+
+  <meta property="og:title" content="{% block og_title %}Uygun Georgia{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}ვულკანიზაცია · ავტოქიმია · ხელსაწყოები — ბათუმი{% endblock %}">
+  <meta property="og:image" content="/assets/brand/logo.png">
+  <meta property="og:type" content="website">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Georgian:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'uygun-red':   '#BC1215',
+            'uygun-dark':  '#7A0C0E',
+            'uygun-black': '#0F0F0F',
+            'uygun-grey':  '#555555',
+            'uygun-light': '#F5F5F5',
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Georgian', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', 'Noto Sans Georgian', system-ui, sans-serif; }
+    .ka  { font-family: 'Noto Sans Georgian', 'Inter', system-ui, sans-serif; }
+  </style>
+</head>
+<body class="bg-uygun-light text-uygun-black antialiased">
+
+  {% block body %}{% endblock %}
+
+  <footer class="bg-uygun-black text-white/80 mt-20">
+    <div class="max-w-7xl mx-auto px-8 py-12 grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/assets/brand/logo.png" alt="Uygun Georgia" class="h-10 w-10 rounded-full object-cover bg-white p-1">
+          <span class="text-xl font-semibold text-white">Uygun Georgia</span>
+        </div>
+        <p class="text-sm leading-relaxed">
+          {{ copy.FOOTER_TAGLINE }}
+        </p>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">ნავიგაცია</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/" class="hover:text-uygun-red transition-colors">მთავარი</a></li>
+          <li><a href="/products" class="hover:text-uygun-red transition-colors">პროდუქცია</a></li>
+          <li><a href="/posts" class="hover:text-uygun-red transition-colors">სიახლეები</a></li>
+          <li><a href="/contact" class="hover:text-uygun-red transition-colors">კონტაქტი</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">კონტაქტი</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="tel:+995568909087" class="hover:text-uygun-red transition-colors">+995 568 90 90 87</a></li>
+          <li><a href="https://wa.me/995568909087" target="_blank" rel="noopener" class="hover:text-uygun-red transition-colors">WhatsApp</a></li>
+          <li>ბათუმი, მამია ვარშანიძის 189</li>
+          <li class="text-white/60">ორშ – შაბ, 10:00 – 19:00</li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10">
+      <div class="max-w-7xl mx-auto px-8 py-5 text-xs text-white/50 flex flex-col md:flex-row justify-between gap-2">
+        <span>© {{ now_year() if now_year is defined else 2026 }} Uygun Georgia. ყველა უფლება დაცულია.</span>
+        <span>შპს უიგუნ ჯორჯია</span>
+      </div>
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

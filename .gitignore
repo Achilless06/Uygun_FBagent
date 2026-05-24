@@ -1,0 +1,37 @@
+# Secrets
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local data (SQLite DB, product photos, rendered cards, web-found photos)
+data/uygun.db
+data/uygun.db-*
+data/photos/
+data/backups/
+data/rendered_cards/
+data/found_photos/
+data/overlaid_photos/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# OS
+Thumbs.db
