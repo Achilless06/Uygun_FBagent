@@ -23,7 +23,7 @@
 </div>
 
 {# ── Filter pills + search ────────────────────────────────────── #}
-<form method="get" action="/admin/photos" class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center mb-5">
+<div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center mb-5">
 
   <div class="flex items-center gap-1 bg-uygun-light rounded-lg p-1 text-sm shrink-0 w-fit">
     {% for opt in [
@@ -31,35 +31,37 @@
         {'key': 'uploaded', 'label': 'ატვირთული'},
         {'key': 'all',      'label': 'ყველა'}
     ] %}
-      <button type="submit" name="filter" value="{{ opt.key }}"
-              class="px-3 py-1.5 rounded-md transition-colors duration-200
-                     {% if filter == opt.key %}
-                       bg-white text-uygun-black shadow-soft font-medium
-                     {% else %}
-                       text-uygun-grey hover:text-uygun-black
-                     {% endif %}">
+      <a href="/admin/photos?filter={{ opt.key }}{% if search %}&search={{ search | urlencode }}{% endif %}"
+         class="px-3 py-1.5 rounded-md transition-colors duration-200
+                {% if filter == opt.key %}
+                  bg-white text-uygun-black shadow-soft font-medium
+                {% else %}
+                  text-uygun-grey hover:text-uygun-black
+                {% endif %}">
         {{ opt.label }}
-      </button>
+      </a>
     {% endfor %}
   </div>
 
-  <label for="photo-search" class="sr-only">ძებნა</label>
-  <div class="relative flex-1 max-w-md">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
-         class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-uygun-grey pointer-events-none" aria-hidden="true">
-      <circle cx="7" cy="7" r="4.5"/>
-      <path d="M10.5 10.5l3 3" stroke-linecap="round"/>
-    </svg>
-    <input type="search" id="photo-search" name="search" value="{{ search }}"
-           autocomplete="off"
-           placeholder="ძებნა კოდით ან სახელით..."
-           class="w-full pl-9 pr-4 py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
-                  focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red
-                  transition-all duration-200" />
-    <input type="hidden" name="filter" value="{{ filter }}" />
-  </div>
+  <form method="get" action="/admin/photos" class="flex-1 max-w-md">
+    <label for="photo-search" class="sr-only">ძებნა</label>
+    <div class="relative">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+           class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-uygun-grey pointer-events-none" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.5"/>
+        <path d="M10.5 10.5l3 3" stroke-linecap="round"/>
+      </svg>
+      <input type="search" id="photo-search" name="search" value="{{ search }}"
+             autocomplete="off"
+             placeholder="ძებნა კოდით ან სახელით..."
+             class="w-full pl-9 pr-4 py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
+                    focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red
+                    transition-all duration-200" />
+      <input type="hidden" name="filter" value="{{ filter }}" />
+    </div>
+  </form>
 
-</form>
+</div>
 
 {# ── Product rows ─────────────────────────────────────────────── #}
 {% if products %}
