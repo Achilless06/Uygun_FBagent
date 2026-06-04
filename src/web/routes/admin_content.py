@@ -14,24 +14,15 @@ sentence variety, SEO score, keyword density.
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
 
 from src import brand
+from src.web.analyzers.brand_voice_analyzer import BrandVoiceAnalyzer
+from src.web.analyzers.seo_optimizer import SEOOptimizer
 from src.web.auth import admin_auth
 from src.web.render import render
 from src.web.routes.admin import _check_csrf, _persist_cookie
-
-# Inject skill scripts onto sys.path so we can import the analyzers.
-_SKILL_DIR = Path(__file__).resolve().parents[3] / ".claude" / "skills" / "content-creator" / "scripts"
-if str(_SKILL_DIR) not in sys.path:
-    sys.path.insert(0, str(_SKILL_DIR))
-
-from brand_voice_analyzer import BrandVoiceAnalyzer  # noqa: E402
-from seo_optimizer import SEOOptimizer  # noqa: E402
 
 router = APIRouter(prefix="/admin/content", tags=["admin"])
 
