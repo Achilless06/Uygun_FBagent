@@ -1,0 +1,160 @@
+{% extends "admin/_layout.html" %}
+{% block title %}მთავარი — Uygun Georgia admin{% endblock %}
+
+{% block admin_body %}
+
+<div class="mb-8">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
+    <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">დაშბორდი</span>
+  </div>
+  <h1 class="text-2xl sm:text-3xl font-bold text-uygun-black tracking-tight">მთავარი</h1>
+  <p class="mt-1 text-sm text-uygun-grey">სრული მიმოხილვა — პროდუქცია, პოსტები, ხარჯი, ბოტის სტატუსი.</p>
+</div>
+
+{# ── Top KPI cards ─────────────────────────────────────────────── #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  <div class="p-5 rounded-2xl bg-white border border-black/[0.07] shadow-card">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">პროდუქცია</p>
+    <p class="text-3xl font-bold text-uygun-black mono tracking-tighter">{{ total_products }}</p>
+    <p class="mt-2 text-xs text-uygun-grey">{{ with_photo }} ფოტოთი ({{ "%.0f"|format(photo_pct) }}%)</p>
+  </div>
+
+  <div class="p-5 rounded-2xl bg-white border border-black/[0.07] shadow-card">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">პოსტი (გამოქვეყნდა)</p>
+    <p class="text-3xl font-bold text-uygun-black mono tracking-tighter">{{ posts_total }}</p>
+    <p class="mt-2 text-xs text-uygun-grey">{{ drafts_pending }} მოლოდინში ({{ drafts_total }} ჯამში)</p>
+  </div>
+
+  <div class="p-5 rounded-2xl bg-white border border-black/[0.07] shadow-card">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">თვის ხარჯი</p>
+    <p class="text-3xl font-bold {% if spend.pct >= 80 %}text-uygun-red{% else %}text-uygun-black{% endif %} mono tracking-tighter">
+      ${{ "%.2f"|format(spend.spent_usd) }}
+    </p>
+    <div class="mt-2 flex items-center gap-2">
+      <div class="flex-1 h-1 rounded-full bg-black/[0.06] overflow-hidden">
+        <div class="h-full rounded-full {% if spend.pct >= 100 %}bg-uygun-red{% elif spend.pct >= 80 %}bg-orange-500{% else %}bg-emerald-500{% endif %}"
+             style="width: {{ [spend.pct, 100]|min }}%;"></div>
+      </div>
+      <span class="text-xs text-uygun-grey mono shrink-0">{{ "%.0f"|format(spend.pct) }}% / ${{ "%.0f"|format(spend.cap_usd) }}</span>
+    </div>
+  </div>
+
+  <div class="p-5 rounded-2xl {% if agent_active %}bg-emerald-50 border-emerald-500/30{% else %}bg-uygun-light border-uygun-red/30{% endif %} border shadow-card dark:bg-white dark:border-black/[0.07]">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">ბოტი</p>
+    <div class="flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full {% if agent_active %}bg-emerald-500 animate-pulse{% else %}bg-uygun-red{% endif %}"></span>
+      <p class="text-xl font-bold text-uygun-black tracking-tight">
+        {% if agent_active %}აქტიური{% else %}გათიშულია{% endif %}
+      </p>
+    </div>
+    <a href="/admin/settings" class="mt-3 inline-flex items-center gap-1 text-xs text-uygun-red hover:underline">
+      პარამეტრები
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.75" class="w-3 h-3" aria-hidden="true">
+        <path d="M2 6h8M7 3l3 3-3 3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+
+</div>
+
+{# ── Sales (last 7 / 30 days) ────────────────────────────────── #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+
+  <div class="p-6 rounded-2xl bg-white border border-black/[0.07] shadow-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-uygun-black">გაყიდვები</h2>
+      <a href="/admin/sales" class="text-xs text-uygun-red hover:underline">ნახე ყველა →</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-xs uppercase tracking-widest text-uygun-grey mb-1">ბოლო 7 დღე</p>
+        <p class="text-2xl font-bold text-uygun-black mono">{{ "%.2f"|format(sales_7d.total_revenue) }} ₾</p>
+        <p class="text-xs text-uygun-grey mt-1">{{ sales_7d.count }} გაყიდვა</p>
+      </div>
+      <div>
+        <p class="text-xs uppercase tracking-widest text-uygun-grey mb-1">ბოლო 30 დღე</p>
+        <p class="text-2xl font-bold text-uygun-black mono">{{ "%.2f"|format(sales_30d.total_revenue) }} ₾</p>
+        <p class="text-xs text-uygun-grey mt-1">{{ sales_30d.count }} გაყიდვა</p>
+      </div>
+    </div>
+  </div>
+
+  {# ── Quick actions ─────────────────────────────────────────── #}
+  <div class="p-6 rounded-2xl bg-uygun-black text-white shadow-card overflow-hidden relative">
+    <div class="absolute -right-8 -top-8 w-40 h-40 rounded-full border border-white/[0.06] ring-drift"
+         style="--ring-duration: 24s; --ring-delay: 0s;"></div>
+    <div class="relative">
+      <h2 class="text-sm font-semibold mb-4">სწრაფი ქმედებები</h2>
+      <div class="grid grid-cols-2 gap-2">
+        <a href="/admin/sales" class="px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-white/90 hover:text-white transition-colors duration-200 text-center">
+          + გაყიდვა
+        </a>
+        <a href="/admin/memories" class="px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-white/90 hover:text-white transition-colors duration-200 text-center">
+          + მეხსიერება
+        </a>
+        <a href="/admin/photos" class="px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-white/90 hover:text-white transition-colors duration-200 text-center">
+          ფოტო ატვირთვა
+        </a>
+        <a href="/admin/products" class="px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-white/90 hover:text-white transition-colors duration-200 text-center">
+          პროდუქტი
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── Latest activity ──────────────────────────────────────────── #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+  <div class="p-6 rounded-2xl bg-white border border-black/[0.07] shadow-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-uygun-black">ბოლო პოსტები</h2>
+      <a href="/admin/posts" class="text-xs text-uygun-red hover:underline">ნახე ყველა →</a>
+    </div>
+    {% if latest_posts %}
+      <ul class="space-y-3">
+        {% for p in latest_posts %}
+          <li class="flex items-start justify-between gap-3 pb-3 border-b border-black/[0.06] last:border-0 last:pb-0">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm text-uygun-black line-clamp-2 leading-snug">{{ p.draft.body_text | truncate(110, True, '…') }}</p>
+              <p class="mt-1 text-xs text-uygun-grey mono">{{ p.published_at.strftime('%d.%m.%Y %H:%M') }}</p>
+            </div>
+            <a href="/posts/{{ p.id }}" target="_blank" rel="noopener" class="shrink-0 text-xs text-uygun-red hover:underline">ნახე →</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-uygun-grey text-center py-8">ჯერ პოსტი არ არის გამოქვეყნებული.</p>
+    {% endif %}
+  </div>
+
+  <div class="p-6 rounded-2xl bg-white border border-black/[0.07] shadow-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-uygun-black">ბოლო გაყიდვები</h2>
+      <a href="/admin/sales" class="text-xs text-uygun-red hover:underline">ნახე ყველა →</a>
+    </div>
+    {% if latest_sales %}
+      <ul class="space-y-3">
+        {% for s in latest_sales %}
+          <li class="flex items-center justify-between gap-3 pb-3 border-b border-black/[0.06] last:border-0 last:pb-0">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-uygun-black truncate">{{ s.product_name }}</p>
+              <p class="mt-0.5 text-xs text-uygun-grey mono">
+                {{ s.sold_at.strftime('%d.%m.%Y') }} · {{ s.quantity }} × {{ "%.2f"|format(s.unit_price) }} ₾
+              </p>
+            </div>
+            <span class="shrink-0 text-sm font-semibold text-uygun-black mono">{{ "%.2f"|format(s.total_price) }} ₾</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-uygun-grey text-center py-8">ჯერ გაყიდვა არ არის ჩაწერილი.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 
 from src import db
-from src.web.app import templates
+from src.web.render import render
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ async def list_posts(request: Request, page: int = 1) -> HTMLResponse:
     rows = db.list_published_posts(limit=PER_PAGE, offset=(page - 1) * PER_PAGE)
     total = db.count_published_posts()
     total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
-    return templates.TemplateResponse(
+    return render(
         request,
         "posts/list.html",
         {
@@ -36,4 +36,4 @@ async def post_detail(request: Request, post_id: int) -> HTMLResponse:
     p = db.get_published_post(post_id)
     if p is None:
         raise HTTPException(status_code=404, detail="Post not found")
-    return templates.TemplateResponse(request, "posts/detail.html", {"post": p})
+    return render(request, "posts/detail.html", {"post": p})

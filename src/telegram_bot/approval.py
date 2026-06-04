@@ -441,13 +441,11 @@ def _generate_with_violation(slot: str, seed_violation: guardrails.Violation) ->
     re-using the rest of generator's pipeline. Simpler than a config flag.
     """
     cfg = config.load()
-    from src.ai.claude_client import ClaudeClient
     from src.ai.gemini_client import GeminiClient
 
-    claude = ClaudeClient(cfg)
     gemini = GeminiClient(cfg)
 
-    brief = generator.pick_topic(claude, slot)
+    brief = generator.pick_topic(gemini, slot)
     product = generator._load_product(brief.featured_product_code)
 
     # Pre-seed: pass the founder feedback as a "previous_violation" so the

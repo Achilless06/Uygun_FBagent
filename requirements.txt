@@ -21,6 +21,8 @@ openpyxl==3.1.5
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
 jinja2==3.1.4
+# Required by FastAPI to parse multipart/form-data (file uploads on /admin/photos).
+python-multipart==0.0.29
 
 # Image generation (PIL text cards)
 Pillow==10.4.0

@@ -1,89 +1,234 @@
-{# Reusable card components. #}
+{# ─── _macros.html ────────────────────────────────────────────────
+   Reusable Jinja2 macros.
+   Usage:  {% from "_macros.html" import product_card, post_card, theme_toggle %}
+──────────────────────────────────────────────────────────────────── #}
 
-{% macro product_card(p) %}
-<a href="/products/{{ p.code }}"
-   class="group relative flex flex-col bg-gradient-to-br from-white via-white to-uygun-light/40 rounded-2xl p-5 md:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_30px_60px_-15px_rgba(188,18,21,0.15)] transition-all duration-500 hover:-translate-y-2 border border-uygun-black/[0.04] hover:border-uygun-red/40 overflow-hidden min-h-[260px]">
 
-  {# Decorative oversized product code as ghost watermark in top-right. #}
-  <span class="absolute -top-2 right-3 md:right-5 text-[3.5rem] md:text-[4.5rem] font-bold text-uygun-black/[0.035] leading-none select-none pointer-events-none tracking-tighter font-mono">
-    {{ p.code }}
-  </span>
+{# ── lang_switcher (collapsible dropdown) ──────────────────────── #}
+{# Shows ONLY the active language as a flag button; on click, expands
+   to a panel listing the other languages.
 
-  {# Red glow that emerges on hover. #}
-  <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-uygun-red/0 group-hover:bg-uygun-red/20 blur-3xl transition-all duration-700 pointer-events-none"></div>
+   variant : "dark-nav"  (currently the only variant — white-on-dark)
+   size    : "sm" | "md" | "lg"   (matches theme_toggle sizes)
+   direction: "down" (default) | "up" — flip when used in footer.
 
-  {# Eyebrow with red dash accent. #}
-  <div class="relative flex items-center gap-2.5 mb-5">
-    <span class="block w-5 h-px bg-uygun-red group-hover:w-8 transition-all duration-500"></span>
-    <span class="text-[10px] font-semibold text-uygun-red tracking-[0.22em] uppercase">
-      {{ p.category[:24] if p.category else 'Uygun Georgia' }}
-    </span>
-  </div>
-
-  {# Title. #}
-  <h3 class="text-base md:text-[17px] font-semibold text-uygun-black leading-snug group-hover:text-uygun-red transition-colors line-clamp-3 relative tracking-tight">
-    {{ p.name }}
-  </h3>
-
-  <div class="flex-1 min-h-[0.5rem]"></div>
-
-  {# Footer: price (with eyebrow label) + stock dot. #}
-  <div class="mt-6 pt-4 border-t border-uygun-black/[0.06] flex items-end justify-between relative">
-    <div>
-      {% if p.price and p.price > 0 %}
-      <span class="block text-[9px] text-uygun-grey/80 uppercase tracking-[0.18em] mb-1">ფასი</span>
-      <span class="text-xl md:text-2xl font-semibold text-uygun-black tracking-tight tabular-nums">
-        {{ '%g' | format(p.price) }}<span class="text-base text-uygun-grey font-normal ml-0.5">₾</span>
-      </span>
-      {% else %}
-      <span class="block text-[9px] text-uygun-grey/80 uppercase tracking-[0.18em] mb-1">ფასი</span>
-      <span class="text-sm font-medium text-uygun-grey">დაგვირეკე</span>
-      {% endif %}
+   Click-outside / Escape close handled by the global script in base.html
+   that targets every `.lang-switcher`. Each instance gets a unique
+   trigger ID so aria-controls works for screen readers.                 #}
+{% macro lang_switcher(variant="dark-nav", size="md", direction="down") %}
+  {% set sz = {"sm": "w-7 h-7 text-sm", "md": "w-8 h-8 text-base", "lg": "w-9 h-9 text-lg"}[size] %}
+  {% set current = langs | selectattr("code", "equalto", lang) | first %}
+  {% set others = langs | rejectattr("code", "equalto", lang) | list %}
+  {% set uid = range(100000, 999999) | random %}
+  <div class="lang-switcher relative">
+    <button type="button"
+            id="lang-trigger-{{ uid }}"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="lang-menu-{{ uid }}"
+            aria-label="{{ t.NAV_MENU_LABEL }}: {{ current.name }}"
+            title="{{ current.name }}"
+            class="lang-trigger {{ sz }} rounded-full flex items-center justify-center
+                   ring-1 ring-uygun-red bg-white/5 hover:bg-white/10
+                   transition-all duration-200">
+      {{ current.flag }}
+    </button>
+    <div id="lang-menu-{{ uid }}"
+         role="menu"
+         aria-labelledby="lang-trigger-{{ uid }}"
+         class="lang-menu absolute
+                {% if direction == 'up' %}bottom-full mb-2 left-0 origin-bottom-left{% else %}top-full mt-2 right-0 origin-top-right{% endif %}
+                z-50 min-w-[140px] py-1
+                bg-uygun-black/95 backdrop-blur-md border border-white/10
+                rounded-lg shadow-hover">
+      {% for L in others %}
+        <button type="button"
+                role="menuitem"
+                onclick="setLang('{{ L.code }}')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white
+                       hover:bg-white/10 transition-colors duration-150 text-left">
+          <span class="text-base" aria-hidden="true">{{ L.flag }}</span>
+          <span>{{ L.name }}</span>
+        </button>
+      {% endfor %}
     </div>
-    <div class="pb-1">
+  </div>
+{% endmacro %}
+
+
+{# ── theme_toggle (sun/moon button) ────────────────────────────── #}
+{# variant: "dark-nav" (white icons on dark bg) | "footer" (same)  #}
+{# size: "sm" (w-7) | "md" (w-8) | "lg" (w-9)                      #}
+{% macro theme_toggle(variant="dark-nav", size="md") %}
+  {% set sz = {"sm": "w-7 h-7 text-sm", "md": "w-8 h-8 text-base", "lg": "w-9 h-9 text-lg"}[size] %}
+  {# aria-label is updated client-side by toggleTheme() to reflect the
+     action the next click will perform. Initial value reflects light-mode
+     default; the pre-paint script syncs it before first interaction. #}
+  <button type="button" onclick="toggleTheme()"
+          data-theme-toggle
+          data-label-dark="{{ t.THEME_DARK_LABEL }}"
+          data-label-light="{{ t.THEME_LIGHT_LABEL }}"
+          title="{{ t.THEME_DARK_LABEL }} / {{ t.THEME_LIGHT_LABEL }}"
+          aria-label="{{ t.THEME_DARK_LABEL }}"
+          class="{{ sz }} rounded-full flex items-center justify-center
+                 text-white/60 hover:text-white opacity-60 hover:opacity-100
+                 hover:bg-white/10 hover:scale-110
+                 transition-all duration-200">
+    {# Moon (visible in light mode → click to go dark) #}
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="w-4 h-4 block dark:hidden">
+      <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+    </svg>
+    {# Sun (visible in dark mode → click to go light) #}
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="w-4 h-4 hidden dark:block">
+      <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+    </svg>
+  </button>
+{% endmacro %}
+
+
+{# ── product_card ───────────────────────────────────────────────── #}
+{# No product photos. Card is pure typography + brand decoration.   #}
+{% macro product_card(p, delay=0) %}
+<a href="/products/{{ p.code | urlencode }}"
+   data-reveal {% if delay %}data-reveal-delay="{{ delay }}"{% endif %}
+   class="tilt-card group relative flex flex-col bg-white rounded-xl border border-black/[0.07]
+          shadow-card hover:shadow-hover hover:border-uygun-red/30
+          transition-all duration-300 ease-smooth
+          overflow-hidden hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uygun-red">
+  <div class="tilt-card-inner flex flex-col flex-1">
+
+  {# Top band — photo when uploaded, decorative typography otherwise #}
+  <div class="relative h-44 bg-uygun-light overflow-hidden flex items-center justify-center texture-noise">
+    {% if p.has_photo %}
+      <img src="/assets/uploaded/{{ p.code | urlencode }}.jpg?v={{ p.updated_at | int_ts }}"
+           alt="{{ p.name }}"
+           width="400" height="176" loading="lazy" decoding="async"
+           class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-smooth" />
+    {% else %}
+      {# Geometric background accent — purely decorative #}
+      <div class="absolute -right-4 -top-4 w-24 h-24 rounded-full border border-black/[0.05]
+                  group-hover:scale-110 transition-transform duration-500"></div>
+      <div class="absolute -right-2 -top-2 w-12 h-12 rounded-full border border-black/[0.05]"></div>
+      <div class="absolute left-6 bottom-3 w-6 h-6 rounded-full bg-black/[0.04]"></div>
+
+      {# Product code as large display text — scales gently on group-hover #}
+      <span class="glyph-hover relative text-5xl font-bold text-uygun-black/10 tracking-tighter select-none mono
+                   group-hover:text-uygun-black/15">
+        {{ p.code }}
+      </span>
+    {% endif %}
+
+    {# Stock indicator dot — top-left. On photo variant, sits on a white pill so it stays legible. #}
+    <div class="absolute top-3 left-3 z-10">
       {% if p.stock_qty > 0 %}
-      <span class="flex items-center gap-1.5 text-[10px] text-green-700 font-semibold tracking-[0.12em] uppercase">
-        <span class="relative flex w-1.5 h-1.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
-          <span class="relative inline-flex w-1.5 h-1.5 rounded-full bg-green-500"></span>
+        <span class="flex items-center gap-1.5 text-xs
+                     {% if p.has_photo %}px-2 py-0.5 rounded-full bg-white/90 dark:bg-uygun-black/80 backdrop-blur-sm text-uygun-grey{% else %}text-uygun-grey{% endif %}">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          {{ t.PRODUCT_IN_STOCK }}
         </span>
-        მარაგშია
-      </span>
       {% else %}
-      <span class="flex items-center gap-1.5 text-[10px] text-uygun-grey/70 font-semibold tracking-[0.12em] uppercase">
-        <span class="w-1.5 h-1.5 rounded-full bg-uygun-grey/30"></span>
-        არ არის
-      </span>
+        <span class="flex items-center gap-1.5 text-xs
+                     {% if p.has_photo %}px-2 py-0.5 rounded-full bg-white/90 dark:bg-uygun-black/80 backdrop-blur-sm text-uygun-grey{% else %}text-uygun-grey{% endif %}">
+          <span class="w-1.5 h-1.5 rounded-full bg-black/25"></span>
+          {{ t.PRODUCT_OUT_OF_STOCK }}
+        </span>
       {% endif %}
     </div>
   </div>
+
+  {# Card body #}
+  <div class="flex flex-col flex-1 p-4 gap-2">
+    {# Category pill #}
+    {% if p.category %}
+      <span class="text-xs text-uygun-grey tracking-wide uppercase font-medium truncate">
+        {{ p.category }}
+      </span>
+    {% endif %}
+
+    {# Product name #}
+    <h3 class="text-sm font-semibold text-uygun-black leading-snug tracking-tight line-clamp-2 flex-1">
+      {{ p.name }}
+    </h3>
+
+    {# Price + CTA row #}
+    <div class="flex items-center justify-between pt-2 mt-auto border-t border-black/[0.06]">
+      <span class="text-sm font-semibold text-uygun-black mono">
+        {% if p.price and p.price > 0 %}
+          {{ "%.2f"|format(p.price) }} ₾
+        {% else %}
+          <span class="text-uygun-grey font-normal">{{ t.PRODUCT_CONTACT_FOR_PRICE_CARD }}</span>
+        {% endif %}
+      </span>
+      <span class="text-xs text-uygun-red font-medium group-hover:translate-x-0.5 transition-transform duration-200 inline-flex items-center gap-1">
+        {{ t.PRODUCT_DETAILS }}
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.75" class="w-3 h-3">
+          <path d="M2 6h8M7 3l3 3-3 3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  </div>
+
+  {# Animated accent line — grows L→R on hover/focus #}
+  <span class="card-accent-line" aria-hidden="true"></span>
+
 </a>
 {% endmacro %}
 
 
-{% macro post_card(p) %}
-{% set body = (p.draft.body_text if p.draft else '') | default('', true) %}
-{% set image_path = (p.draft.image_path if p.draft else None) %}
-{% set image_src = '/assets/overlaid/' ~ image_path.split('/')[-1] if image_path else '/assets/brand/logo.png' %}
+{# ── post_card ──────────────────────────────────────────────────── #}
+{% macro post_card(p, delay=0) %}
 <a href="/posts/{{ p.id }}"
-   class="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-  <div class="aspect-video bg-uygun-black overflow-hidden">
-    <img src="{{ image_src }}"
-         alt="Uygun Georgia"
-         loading="lazy"
-         onerror="this.src='/assets/brand/logo.png';this.classList.add('object-contain','p-8','opacity-80')"
-         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+   data-reveal {% if delay %}data-reveal-delay="{{ delay }}"{% endif %}
+   class="tilt-card group relative flex flex-col bg-white rounded-xl border border-black/[0.07]
+          shadow-card hover:shadow-hover hover:border-uygun-red/30
+          transition-all duration-300 ease-smooth
+          overflow-hidden hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uygun-red">
+  <div class="tilt-card-inner flex flex-col flex-1">
+
+  {# Post image — always present for posts #}
+  <div class="relative h-44 bg-uygun-light overflow-hidden">
+    {% if p.draft.image_path %}
+      {% set fname = p.draft.image_path.split('/')[-1] %}
+      <img src="/assets/overlaid/{{ fname }}"
+           alt="{{ p.draft.body_text[:60] }}..."
+           width="400" height="176" loading="lazy" decoding="async"
+           class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-smooth" />
+    {% else %}
+      {# Fallback — typographic placeholder #}
+      <div class="w-full h-full flex items-center justify-center texture-noise">
+        <span class="text-5xl font-bold text-uygun-black/10 tracking-tighter">UG</span>
+      </div>
+    {% endif %}
+    {# Date badge overlay #}
+    <div class="absolute bottom-3 left-3">
+      <span class="inline-block px-2.5 py-1 rounded-full bg-uygun-black/70 backdrop-blur-sm text-white text-xs font-medium mono">
+        {{ p.published_at.strftime('%d.%m.%Y') }}
+      </span>
+    </div>
   </div>
-  <div class="p-6">
-    <time class="text-xs text-uygun-grey uppercase tracking-wider">
-      {{ p.published_at.strftime('%Y · %m · %d') }}
-    </time>
-    <p class="mt-3 text-sm text-uygun-black/80 line-clamp-3 leading-relaxed">
-      {{ body[:180] }}{% if body|length > 180 %}…{% endif %}
+
+  {# Card body #}
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <p class="text-sm text-uygun-black leading-relaxed line-clamp-3 flex-1">
+      {{ p.draft.body_text | truncate(160, True, '…') }}
     </p>
-    <span class="inline-block mt-4 text-xs font-semibold text-uygun-red group-hover:translate-x-1 transition-transform">
-      წაიკითხე →
-    </span>
+
+    <div class="flex items-center justify-between pt-2 border-t border-black/[0.06]">
+      <span class="text-xs text-uygun-grey">{{ t.POST_CARD_TAG }}</span>
+      <span class="text-xs text-uygun-red font-medium group-hover:translate-x-0.5 transition-transform duration-200 inline-flex items-center gap-1">
+        {{ t.POST_CARD_READ }}
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.75" class="w-3 h-3">
+          <path d="M2 6h8M7 3l3 3-3 3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </div>
   </div>
+  </div>
+
+  {# Animated accent line — grows L→R on hover/focus #}
+  <span class="card-accent-line" aria-hidden="true"></span>
+
 </a>
 {% endmacro %}

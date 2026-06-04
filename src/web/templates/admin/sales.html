@@ -1,0 +1,123 @@
+{% extends "admin/_layout.html" %}
+{% block title %}გაყიდვები — Uygun Georgia admin{% endblock %}
+
+{% block admin_body %}
+
+{% set total_revenue = sales | sum(attribute='total_price') if sales else 0 %}
+
+<div class="mb-6">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
+    <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">ჟურნალი</span>
+  </div>
+  <h1 class="text-2xl sm:text-3xl font-bold text-uygun-black tracking-tight">გაყიდვები</h1>
+  <p class="mt-1 text-sm text-uygun-grey">სულ {{ sales|length }} ჩანაწერი · ჯამური შემოსავალი {{ "%.2f"|format(total_revenue) }} ₾</p>
+</div>
+
+{# ── Add form ────────────────────────────────────────────────── #}
+<form method="post" action="/admin/sales"
+      class="mb-8 bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 sm:p-6">
+  <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-4">ახალი გაყიდვა</p>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+    <div class="sm:col-span-1">
+      <label for="s-code" class="block text-xs text-uygun-grey mb-1">პროდუქტის კოდი</label>
+      <input type="text" id="s-code" name="product_code" required maxlength="50"
+             placeholder="მაგ. 1234"
+             class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                    focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    </div>
+    <div>
+      <label for="s-qty" class="block text-xs text-uygun-grey mb-1">რაოდენობა</label>
+      <input type="number" id="s-qty" name="quantity" required step="0.01" min="0.01" value="1"
+             class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                    focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    </div>
+    <div>
+      <label for="s-price" class="block text-xs text-uygun-grey mb-1">ფასი (₾)</label>
+      <input type="number" id="s-price" name="unit_price" required step="0.01" min="0"
+             class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                    focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    </div>
+    <div>
+      <label for="s-notes" class="block text-xs text-uygun-grey mb-1">შენიშვნა (არასავალდებულო)</label>
+      <input type="text" id="s-notes" name="notes" maxlength="200"
+             class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white
+                    focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    </div>
+  </div>
+  <div class="mt-4 flex justify-end">
+    <button type="submit"
+            class="cta-glow inline-flex items-center justify-center px-5 py-2 rounded-lg bg-uygun-red text-white text-sm font-semibold hover:bg-uygun-dark shadow-soft hover:shadow-hover transition-all duration-300">
+      + ჩაწერა
+    </button>
+  </div>
+</form>
+
+{# ── Sales table ─────────────────────────────────────────────── #}
+{% if sales %}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-uygun-light border-b border-black/[0.07]">
+          <tr class="text-left text-xs uppercase tracking-widest text-uygun-grey">
+            <th class="px-4 py-3 font-semibold">თარიღი</th>
+            <th class="px-4 py-3 font-semibold">პროდუქცია</th>
+            <th class="px-4 py-3 font-semibold text-right">რაოდენობა</th>
+            <th class="px-4 py-3 font-semibold text-right">ფასი</th>
+            <th class="px-4 py-3 font-semibold text-right">ჯამი</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sales %}
+            <tr class="border-b border-black/[0.05] last:border-0 hover:bg-uygun-light/40 transition-colors duration-150">
+              <td class="px-4 py-3 mono text-uygun-grey whitespace-nowrap">{{ s.sold_at.strftime('%d.%m.%Y %H:%M') }}</td>
+              <td class="px-4 py-3 text-uygun-black">
+                <div class="font-medium truncate max-w-xs" title="{{ s.product_name }}">{{ s.product_name }}</div>
+                <div class="text-xs text-uygun-grey mono">{{ s.product_code }}{% if s.notes %} · {{ s.notes }}{% endif %}</div>
+              </td>
+              <td class="px-4 py-3 text-right mono">{{ s.quantity }}</td>
+              <td class="px-4 py-3 text-right mono">{{ "%.2f"|format(s.unit_price) }}</td>
+              <td class="px-4 py-3 text-right mono text-uygun-black font-semibold">{{ "%.2f"|format(s.total_price) }} ₾</td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <a href="/admin/sales/{{ s.id }}/invoice" target="_blank" rel="noopener"
+                     class="inline-flex items-center justify-center w-8 h-8 rounded-md text-uygun-grey hover:text-uygun-black hover:bg-uygun-light transition-colors duration-200"
+                     aria-label="ფაქტურა">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3.5 h-3.5" aria-hidden="true">
+                      <path d="M3 1h7l3 3v11H3V1z" stroke-linejoin="round"/>
+                      <path d="M10 1v3h3M5 7h6M5 10h6M5 13h4" stroke-linecap="round"/>
+                    </svg>
+                  </a>
+                  <a href="/admin/sales/{{ s.id }}/edit"
+                     class="inline-flex items-center justify-center w-8 h-8 rounded-md text-uygun-grey hover:text-uygun-black hover:bg-uygun-light transition-colors duration-200"
+                     aria-label="რედაქტირება">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3.5 h-3.5" aria-hidden="true">
+                      <path d="M11 1l4 4-9 9H2v-4l9-9z" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <form method="post" action="/admin/sales/{{ s.id }}/delete"
+                        onsubmit="return confirm('წავშალო ეს გაყიდვა?');" class="inline">
+                    <button type="submit"
+                            class="inline-flex items-center justify-center w-8 h-8 rounded-md text-uygun-grey hover:text-uygun-red hover:bg-uygun-red/5 transition-colors duration-200"
+                            aria-label="წაშლა">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3.5 h-3.5" aria-hidden="true">
+                        <path d="M3 4h10M6.5 4V2.5h3V4M5 4l.5 9.5h5L11 4" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card flex flex-col items-center justify-center py-16 text-center">
+    <p class="text-sm text-uygun-grey">ჯერ გაყიდვა არ არის ჩაწერილი. დაამატე პირველი ზემოთ.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

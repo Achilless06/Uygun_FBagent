@@ -17,6 +17,10 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011"]  # allow assert False in tests
+# FastAPI dependency-injection idioms require call expressions in argument
+# defaults (Depends, File, Form, etc.) — that's exactly what B008 forbids.
+"src/web/auth.py" = ["B008"]
+"src/web/routes/*" = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

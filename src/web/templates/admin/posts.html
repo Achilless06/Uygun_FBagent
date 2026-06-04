@@ -1,0 +1,118 @@
+{% extends "admin/_layout.html" %}
+{% block title %}პოსტები — Uygun Georgia admin{% endblock %}
+
+{% block admin_body %}
+
+{% set status_label = {
+    'pending': 'მოლოდინში',
+    'approved': 'დადასტურდა',
+    'edited': 'რედაქტირდა',
+    'rejected': 'უარყოფილი',
+    'published': 'გამოქვეყნდა'
+} %}
+{% set status_color = {
+    'pending': 'bg-yellow-100 text-yellow-800',
+    'approved': 'bg-blue-100 text-blue-800',
+    'edited': 'bg-purple-100 text-purple-800',
+    'rejected': 'bg-uygun-light text-uygun-grey',
+    'published': 'bg-emerald-100 text-emerald-800'
+} %}
+
+<div class="mb-6">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
+    <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">დრაფტები</span>
+  </div>
+  <h1 class="text-2xl sm:text-3xl font-bold text-uygun-black tracking-tight">პოსტები</h1>
+  <p class="mt-1 text-sm text-uygun-grey">სულ {{ total }} ჩანაწერი — ნახე ან წაშალე გამოუქვეყნებელი დრაფტი.</p>
+</div>
+
+{# ── Status filter ────────────────────────────────────────────── #}
+<div class="flex flex-wrap items-center gap-1 mb-5 bg-uygun-light rounded-lg p-1 text-sm w-fit">
+  <a href="/admin/posts" class="px-3 py-1.5 rounded-md transition-colors duration-200
+            {% if not status %}bg-white text-uygun-black shadow-soft font-medium{% else %}text-uygun-grey hover:text-uygun-black{% endif %}">
+    ყველა
+  </a>
+  {% for st in statuses %}
+    <a href="/admin/posts?status={{ st }}" class="px-3 py-1.5 rounded-md transition-colors duration-200
+              {% if status == st %}bg-white text-uygun-black shadow-soft font-medium{% else %}text-uygun-grey hover:text-uygun-black{% endif %}">
+      {{ status_label.get(st, st) }}
+    </a>
+  {% endfor %}
+</div>
+
+{# ── Drafts list ────────────────────────────────────────────── #}
+{% if drafts %}
+  <ul class="space-y-3">
+    {% for d in drafts %}
+      <li class="bg-white rounded-2xl border border-black/[0.07] shadow-card overflow-hidden">
+        <div class="p-5 flex items-start gap-4">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full font-medium {{ status_color.get(d.status, 'bg-uygun-light text-uygun-grey') }}">{{ status_label.get(d.status, d.status) }}</span>
+              <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-uygun-light text-uygun-grey">{{ d.calendar_slot }}</span>
+              <span class="text-[10px] text-uygun-grey/70 mono">{{ d.target_date.strftime('%d.%m.%Y') }}</span>
+              <span class="text-[10px] text-uygun-grey/70">#{{ d.id }} · rev {{ d.revision }}</span>
+            </div>
+            <p class="text-sm text-uygun-black line-clamp-3 leading-snug">{{ d.body_text }}</p>
+            {% if d.product %}
+              <p class="mt-2 text-xs text-uygun-grey">
+                <span class="mono">{{ d.product.code }}</span> · {{ d.product.name }}
+              </p>
+            {% endif %}
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <a href="/admin/posts/{{ d.id }}"
+               class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-uygun-grey hover:text-uygun-black hover:bg-uygun-light transition-colors duration-200"
+               aria-label="ნახე">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4" aria-hidden="true">
+                <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/>
+              </svg>
+            </a>
+            {% if d.status != 'published' %}
+              <form method="post" action="/admin/posts/{{ d.id }}/delete"
+                    onsubmit="return confirm('წავშალო ეს დრაფტი?');" class="inline">
+                <button type="submit"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-uygun-grey hover:text-uygun-red hover:bg-uygun-red/5 transition-colors duration-200"
+                        aria-label="წაშლა">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4" aria-hidden="true">
+                    <path d="M3 4h10M6.5 4V2.5h3V4M5 4l.5 9.5h5L11 4M7 7v4M9 7v4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card flex flex-col items-center justify-center py-16 text-center">
+    <p class="text-sm text-uygun-grey">{{ 'ფილტრის შესაბამისი დრაფტი ვერ მოიძებნა.' if status else 'ჯერ დრაფტი არ არის.' }}</p>
+  </div>
+{% endif %}
+
+{% if total_pages > 1 %}
+  <nav class="mt-8 flex items-center justify-center gap-1" aria-label="გვერდები">
+    {% if page > 1 %}
+      <a href="?{{ base_qs }}&page={{ page - 1 }}"
+         class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08] text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">←</a>
+    {% endif %}
+    {% for pg in range(1, total_pages + 1) %}
+      {% if pg == page %}
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-uygun-black text-white dark:bg-white dark:text-uygun-black text-sm font-medium">{{ pg }}</span>
+      {% elif pg == 1 or pg == total_pages or (pg >= page - 2 and pg <= page + 2) %}
+        <a href="?{{ base_qs }}&page={{ pg }}"
+           class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08] text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">{{ pg }}</a>
+      {% elif pg == page - 3 or pg == page + 3 %}
+        <span class="inline-flex items-center justify-center w-9 h-9 text-uygun-grey text-sm">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}
+      <a href="?{{ base_qs }}&page={{ page + 1 }}"
+         class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08] text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">→</a>
+    {% endif %}
+  </nav>
+{% endif %}
+
+{% endblock %}

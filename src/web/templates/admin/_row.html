@@ -1,0 +1,87 @@
+{# ─── Admin per-product upload row ────────────────────────────────
+   Renders one Product as a horizontal card with thumbnail, info, and
+   inline upload form. Included by admin/photos.html.
+
+   Available context:
+     p      : Product
+     filter : str (current filter pill)
+     search : str (current search query)
+     page   : int (current page, for redirect-back after upload)
+──────────────────────────────────────────────────────────────────── #}
+<div class="group flex items-center gap-4 p-3 sm:p-4 bg-white rounded-xl border border-black/[0.07]
+            hover:border-black/[0.15] transition-colors duration-200">
+
+  {# Thumbnail (or placeholder) #}
+  <div class="shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden
+              bg-uygun-light flex items-center justify-center relative">
+    {% if p.has_photo %}
+      <img src="/assets/uploaded/{{ p.code | urlencode }}.jpg?v={{ p.updated_at | int_ts }}"
+           alt="{{ p.name }}"
+           class="w-full h-full object-cover" />
+    {% else %}
+      <span class="text-xs font-bold text-uygun-grey/40 mono tracking-tight">{{ p.code }}</span>
+    {% endif %}
+  </div>
+
+  {# Code + name #}
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center gap-2 mb-0.5">
+      <span class="text-xs font-mono text-uygun-grey">{{ p.code }}</span>
+      {% if p.category %}
+        <span class="text-black/20">·</span>
+        <span class="text-xs text-uygun-grey truncate">{{ p.category }}</span>
+      {% endif %}
+    </div>
+    <p class="text-sm font-medium text-uygun-black leading-snug line-clamp-2">{{ p.name }}</p>
+    {% if p.has_photo %}
+      <p class="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        ატვირთულია
+      </p>
+    {% endif %}
+  </div>
+
+  {# Upload + delete forms #}
+  <div class="shrink-0 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+
+    {# Upload form #}
+    <form method="post" action="/admin/photos/{{ p.code | urlencode }}" enctype="multipart/form-data"
+          class="flex items-center gap-2">
+      <input type="hidden" name="filter" value="{{ filter }}" />
+      <input type="hidden" name="search" value="{{ search }}" />
+      <input type="hidden" name="page" value="{{ page }}" />
+      <label class="cursor-pointer">
+        <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required
+               class="hidden"
+               onchange="this.form.submit()" />
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-uygun-black text-white
+                     dark:bg-white dark:text-uygun-black
+                     hover:bg-uygun-red dark:hover:bg-uygun-red dark:hover:text-white
+                     text-xs font-medium transition-colors duration-200">
+          <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+            <path d="M8 1.5a.5.5 0 0 1 .5.5v9.293l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 11.293V2a.5.5 0 0 1 .5-.5z" transform="rotate(180 8 8)"/>
+          </svg>
+          {% if p.has_photo %}შეცვალე{% else %}აირჩიე ფოტო{% endif %}
+        </span>
+      </label>
+    </form>
+
+    {# Delete form (only if photo exists) #}
+    {% if p.has_photo %}
+      <form method="post" action="/admin/photos/{{ p.code | urlencode }}/delete"
+            onsubmit="return confirm('ნამდვილად წავშალო ფოტო {{ p.code }}?');">
+        <input type="hidden" name="filter" value="{{ filter }}" />
+        <input type="hidden" name="search" value="{{ search }}" />
+        <input type="hidden" name="page" value="{{ page }}" />
+        <button type="submit"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                       border border-black/[0.1] text-uygun-grey hover:text-uygun-red hover:border-uygun-red/40
+                       text-xs font-medium transition-colors duration-200">
+          წაშლა
+        </button>
+      </form>
+    {% endif %}
+
+  </div>
+
+</div>

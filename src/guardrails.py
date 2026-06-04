@@ -23,7 +23,7 @@ Plus brandbook §4 voice rules:
   - ✅ "შენ" form only       → check_address_form()
   - ✅ No banned phrases     → check_banned_phrases()
   - ✅ "საბურავი" not "სალტე" → check_tire_word()
-  - ✅ Hashtag count 3-5     → check_hashtags()
+  - ✅ Hashtag count 2-3     → check_hashtags()
   - ✅ Contact block present → check_contact_block()
 """
 
@@ -248,7 +248,7 @@ def check_stock_grounding(draft: Draft) -> list[Violation]:
 
 
 def check_hashtags(draft: Draft) -> list[Violation]:
-    """Brandbook p. 17: 3-5 hashtags per post."""
+    """Minimal-post format: 2-3 hashtags per post (was 3-5 pre-2026-06)."""
     n = len(draft.hashtags)
     if n < brand.MIN_HASHTAGS:
         return [

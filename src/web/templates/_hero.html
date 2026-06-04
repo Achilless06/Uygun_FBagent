@@ -1,110 +1,218 @@
-{# Hero section — full-viewport background, transparent nav, two-line heading, dual CTA. #}
-<section class="relative h-screen overflow-hidden bg-uygun-black">
+{# ─── Hero partial — included by home.html ──────────────────────────
+   Renders the full-viewport homepage hero AND the top navigation bar
+   (transparent/dark variant over the hero background).
+   Sub-pages use their own compact nav defined inline in base.html.
+──────────────────────────────────────────────────────────────────── #}
+{% from "_macros.html" import theme_toggle, lang_switcher with context %}
 
-  {# Background layer: video tag with poster fallback. Drop hero.mp4 into data/brand_assets/ later. #}
-  <video autoplay muted loop playsinline
-         poster="/assets/brand/hero.jpg"
-         class="absolute inset-0 w-full h-full object-cover opacity-90"
-         onerror="this.style.display='none'">
-    {# Uncomment when data/brand_assets/hero.mp4 exists:
-    <source src="/assets/brand/hero.mp4" type="video/mp4"> #}
-  </video>
+{# ── Navigation (hero dark variant) ─────────────────────────────── #}
+<header class="absolute top-0 left-0 right-0 z-30">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16 sm:h-20">
 
-  {# Gradient overlay for legibility + brand depth even when no image is present. #}
-  <div class="absolute inset-0 bg-gradient-to-br from-uygun-black via-uygun-black/70 to-uygun-dark/80"></div>
-  <div class="absolute inset-0 bg-black/30"></div>
-
-  {# Subtle red glow accent — bottom-right radial flourish. #}
-  <div class="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-uygun-red/20 blur-3xl pointer-events-none"></div>
-
-  <div class="relative h-full flex flex-col">
-
-    {# Navigation. #}
-    <nav class="max-w-7xl w-full mx-auto px-6 md:px-8 py-6 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-3 text-white">
+      {# Logo + brand name #}
+      <a href="/" class="flex items-center gap-3 group">
         <img src="/assets/brand/logo.png" alt="Uygun Georgia"
-             class="h-10 w-10 rounded-full object-cover bg-white p-1 shadow-lg">
-        <span class="text-xl md:text-2xl font-semibold tracking-tight">Uygun Georgia</span>
+             width="36" height="36" decoding="async" fetchpriority="high"
+             class="h-9 w-9 rounded-full object-cover ring-1 ring-white/20 group-hover:ring-white/40 transition-all duration-200" />
+        <span class="text-white font-semibold text-base tracking-tight hidden sm:block">Uygun Georgia</span>
       </a>
 
-      <ul class="hidden md:flex items-center gap-8 text-white/90 text-sm font-medium">
-        <li><a href="/" class="hover:text-white transition-colors">მთავარი</a></li>
-        <li><a href="/products" class="hover:text-white transition-colors">პროდუქცია</a></li>
-        <li><a href="/posts" class="hover:text-white transition-colors">სიახლეები</a></li>
-        <li><a href="/contact" class="hover:text-white transition-colors">კონტაქტი</a></li>
-        <li>
-          <a href="tel:+995568909087"
-             class="ml-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur border border-white/20 hover:bg-white/20 transition-colors">
-            +995 568 90 90 87
-          </a>
-        </li>
-      </ul>
+      {# Desktop nav #}
+      <nav class="hidden md:flex items-center gap-1" aria-label="{{ t.NAV_MENU_LABEL }}">
+        <ul class="flex items-center gap-1 mr-4">
+          <li>
+            <a href="/"
+               class="nav-link px-3 py-2 text-sm text-white/80 hover:text-white rounded-md transition-all duration-200">
+              {{ t.NAV_HOME }}
+            </a>
+          </li>
+          <li>
+            <a href="/products"
+               class="nav-link px-3 py-2 text-sm text-white/80 hover:text-white rounded-md transition-all duration-200">
+              {{ t.NAV_PRODUCTS }}
+            </a>
+          </li>
+          <li>
+            <a href="/posts"
+               class="nav-link px-3 py-2 text-sm text-white/80 hover:text-white rounded-md transition-all duration-200">
+              {{ t.NAV_POSTS }}
+            </a>
+          </li>
+          <li>
+            <a href="/contact"
+               class="nav-link px-3 py-2 text-sm text-white/80 hover:text-white rounded-md transition-all duration-200">
+              {{ t.NAV_CONTACT }}
+            </a>
+          </li>
+        </ul>
 
-      <button id="navToggle" aria-label="Menu"
-              class="md:hidden text-white p-2 -mr-2"
-              onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      </button>
-    </nav>
+        {# Language switcher + theme toggle (desktop, dark nav variant) #}
+        <div class="flex items-center gap-2 mr-3 pl-3 border-l border-white/15">
+          {{ lang_switcher(size="md") }}
+          {{ theme_toggle(size="md") }}
+        </div>
 
-    {# Mobile menu — toggled by the hamburger above. #}
-    <div id="mobileMenu" class="hidden md:hidden absolute top-20 left-4 right-4 z-50
-                                bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6">
-      <ul class="space-y-3 text-uygun-black font-medium">
-        <li><a href="/" class="block py-2 hover:text-uygun-red transition-colors">მთავარი</a></li>
-        <li><a href="/products" class="block py-2 hover:text-uygun-red transition-colors">პროდუქცია</a></li>
-        <li><a href="/posts" class="block py-2 hover:text-uygun-red transition-colors">სიახლეები</a></li>
-        <li><a href="/contact" class="block py-2 hover:text-uygun-red transition-colors">კონტაქტი</a></li>
-        <li class="pt-3 border-t border-uygun-black/10">
-          <a href="tel:+995568909087" class="block py-2 text-uygun-red font-semibold">📞 +995 568 90 90 87</a>
-        </li>
-      </ul>
-    </div>
-
-    {# Hero content centered. #}
-    <div class="flex-1 flex flex-col items-center justify-center text-center px-6 -mt-12">
-      <p class="text-xs md:text-sm font-semibold text-white/70 tracking-[0.25em] uppercase mb-6">
-        {{ copy.HERO_EYEBROW }}
-      </p>
-
-      <h1 class="leading-[0.95] tracking-tighter">
-        <span class="block text-6xl md:text-7xl lg:text-8xl font-normal text-white/50">
-          {{ copy.HERO_HEADING_1 }}.
-        </span>
-        <span class="block text-6xl md:text-7xl lg:text-8xl font-normal text-white -mt-2 md:-mt-3">
-          {{ copy.HERO_HEADING_2 }}.
-        </span>
-      </h1>
-
-      <p class="text-base md:text-xl text-white/85 mt-8 mb-10 max-w-2xl leading-relaxed">
-        {{ copy.HERO_SUBTITLE }}
-      </p>
-
-      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <a href="/products"
-           class="px-7 py-3 rounded-full bg-white/95 text-uygun-black font-semibold hover:bg-white transition-colors shadow-lg">
-          {{ copy.CTA_PRIMARY }}
+        <a href="tel:{{ brand.CONTACT_PHONE_TEL }}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/25 text-white text-sm font-medium
+                  hover:bg-white hover:text-uygun-black transition-all duration-300 ease-smooth">
+          <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+            <path d="M2 3a1 1 0 011-1h2.5a1 1 0 01.97.757l.75 3a1 1 0 01-.285.98L5.72 7.95a8 8 0 004.33 4.33l1.213-1.215a1 1 0 01.98-.285l3 .75A1 1 0 0116 12.5V15a1 1 0 01-1 1C7.163 16 0 8.837 0 1a1 1 0 011-1h2.5z"/>
+          </svg>
+          {{ brand.CONTACT_PHONE }}
         </a>
-        <a href="/contact"
-           class="px-7 py-3 rounded-full bg-uygun-red text-white font-semibold hover:bg-uygun-dark transition-colors shadow-lg">
-          {{ copy.CTA_SECONDARY }}
+      </nav>
+
+      {# Mobile hamburger #}
+      <button
+        id="hamburger-btn"
+        type="button"
+        aria-label="{{ t.NAV_MENU_LABEL }}"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-md hover:bg-white/10 transition-colors duration-200"
+      >
+        <span class="hamburger-line w-5 h-px bg-white transition-all duration-300 origin-center"></span>
+        <span class="hamburger-line w-5 h-px bg-white transition-all duration-300"></span>
+        <span class="hamburger-line w-5 h-px bg-white transition-all duration-300 origin-center"></span>
+      </button>
+
+    </div>
+  </div>
+
+  {# Mobile menu panel #}
+  <div id="mobile-menu" class="hidden md:hidden bg-uygun-black/95 backdrop-blur-sm border-t border-white/10">
+    <div class="max-w-7xl mx-auto px-4 py-4 space-y-1">
+      <a href="/" class="block px-3 py-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-md text-sm transition-colors duration-200">{{ t.NAV_HOME }}</a>
+      <a href="/products" class="block px-3 py-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-md text-sm transition-colors duration-200">{{ t.NAV_PRODUCTS }}</a>
+      <a href="/posts" class="block px-3 py-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-md text-sm transition-colors duration-200">{{ t.NAV_POSTS }}</a>
+      <a href="/contact" class="block px-3 py-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-md text-sm transition-colors duration-200">{{ t.NAV_CONTACT }}</a>
+      {# Language switcher + theme toggle in mobile menu #}
+      <div class="pt-3 mt-3 border-t border-white/10 flex items-center gap-2 px-3">
+        {{ lang_switcher(size="lg") }}
+        {{ theme_toggle(size="lg") }}
+      </div>
+      <div class="pt-3 mt-1 border-t border-white/10">
+        <a href="tel:{{ brand.CONTACT_PHONE_TEL }}"
+           class="flex items-center gap-2 px-3 py-2.5 text-uygun-red text-sm font-medium">
+          <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+            <path d="M2 3a1 1 0 011-1h2.5a1 1 0 01.97.757l.75 3a1 1 0 01-.285.98L5.72 7.95a8 8 0 004.33 4.33l1.213-1.215a1 1 0 01.98-.285l3 .75A1 1 0 0116 12.5V15a1 1 0 01-1 1C7.163 16 0 8.837 0 1a1 1 0 011-1h2.5z"/>
+          </svg>
+          {{ brand.CONTACT_PHONE }}
         </a>
       </div>
     </div>
+  </div>
+</header>
 
-    {# Scroll cue. #}
-    <div class="pb-8 flex justify-center">
-      <a href="#below-hero" class="text-white/40 hover:text-white/80 transition-colors animate-bounce">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"></polyline>
+{# ── Hero section ────────────────────────────────────────────────── #}
+<section class="spotlight-host relative h-screen min-h-[600px] flex flex-col justify-center overflow-hidden bg-uygun-black">
+
+  {# Subtle background texture / abstract grid — drifts slowly #}
+  <div class="absolute inset-0 opacity-[0.04] grid-drift"
+       style="background-image: linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px); background-size: 48px 48px;">
+  </div>
+
+  {# Very faint radial glow — gently pulses #}
+  <div class="absolute inset-0 radial-pulse"
+       style="background: radial-gradient(ellipse 80% 60% at 20% 50%, rgba(188,18,21,0.06) 0%, transparent 70%);">
+  </div>
+
+  {# Content — subtle parallax on scroll #}
+  <div data-parallax data-parallax-speed="-6"
+       class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+
+    {# Eyebrow #}
+    <div class="mb-6 flex items-center gap-3" data-reveal>
+      <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
+      <span class="text-xs font-semibold uppercase tracking-widest text-white/40">
+        {{ t.HERO_EYEBROW }}
+      </span>
+    </div>
+
+    {# Two-line heading — stagger between the two lines #}
+    <h1 class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-none mb-6 max-w-4xl">
+      <span class="block text-gradient-brand" data-reveal data-reveal-delay="100">{{ t.HERO_HEADING_1 }}</span>
+      <span class="block text-white/40 mt-1" data-reveal data-reveal-delay="250">{{ t.HERO_HEADING_2 }}</span>
+    </h1>
+
+    {# Subtitle — /70 for WCAG AA 4.5:1 contrast against #0F0F0F bg #}
+    <p class="text-base sm:text-lg text-white/70 max-w-xl leading-relaxed mb-10"
+       data-reveal data-reveal-delay="450">
+      {{ t.HERO_SUBTITLE }}
+    </p>
+
+    {# CTA pills #}
+    <div class="flex flex-wrap gap-3" data-reveal data-reveal-delay="600">
+      <a href="/products"
+         class="cta-glow inline-flex items-center gap-2 px-6 py-3 rounded-full bg-uygun-red text-white text-sm font-semibold
+                hover:bg-uygun-dark transition-all duration-300 ease-smooth shadow-soft hover:shadow-hover group">
+        {{ t.CTA_PRIMARY }}
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+             class="w-3.5 h-3.5 -mr-0.5 group-hover:translate-x-0.5 transition-transform duration-200">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </a>
+      <a href="/contact"
+         class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white/80 text-sm font-medium
+                hover:bg-white/10 hover:text-white hover:border-white/30 transition-all duration-300 ease-smooth">
+        {{ t.CTA_SECONDARY }}
+      </a>
     </div>
+
   </div>
+
+  {# Scroll cue — gentle opacity pulse on top of the existing bounce #}
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cue-pulse">
+    <span class="text-xs text-white tracking-widest uppercase">{{ t.SCROLL_CUE }}</span>
+    <svg viewBox="0 0 16 24" fill="none" stroke="white" stroke-width="1.5"
+         class="w-5 h-7 animate-bounce" style="animation-duration: 2s;">
+      <rect x="1" y="1" width="14" height="22" rx="7" stroke-opacity="0.5"/>
+      <circle cx="8" cy="7" r="1.5" fill="white" class="animate-pulse"/>
+    </svg>
+  </div>
+
 </section>
+
+{# ── Hamburger vanilla JS — Escape, click-outside, auto-close on link ── #}
+<script>
+  (function () {
+    var btn  = document.getElementById('hamburger-btn');
+    if (!btn) return;
+    var menu = document.getElementById('mobile-menu');
+    var lines = btn.querySelectorAll('.hamburger-line');
+    var open = false;
+
+    function setOpen(next) {
+      open = next;
+      btn.setAttribute('aria-expanded', String(open));
+      if (open) {
+        menu.classList.remove('hidden');
+        lines[0].style.transform = 'translateY(7px) rotate(45deg)';
+        lines[1].style.opacity   = '0';
+        lines[2].style.transform = 'translateY(-7px) rotate(-45deg)';
+      } else {
+        menu.classList.add('hidden');
+        lines[0].style.transform = '';
+        lines[1].style.opacity   = '';
+        lines[2].style.transform = '';
+      }
+    }
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setOpen(!open);
+    });
+    menu.addEventListener('click', function (e) {
+      if (e.target.closest('a')) setOpen(false);
+    });
+    document.addEventListener('click', function (e) {
+      if (!open) return;
+      if (menu.contains(e.target) || btn.contains(e.target)) return;
+      setOpen(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && open) { setOpen(false); btn.focus(); }
+    });
+  })();
+</script>

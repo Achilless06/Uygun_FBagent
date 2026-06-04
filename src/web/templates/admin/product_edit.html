@@ -1,0 +1,71 @@
+{% extends "admin/_layout.html" %}
+{% block title %}{{ product.name }} — რედაქტირება{% endblock %}
+
+{% block admin_body %}
+
+<nav aria-label="ბილიკი" class="flex items-center gap-2 text-xs text-uygun-grey mb-6">
+  <a href="/admin" class="hover:text-uygun-black transition-colors duration-200">მთავარი</a>
+  <span aria-hidden="true" class="text-black/20">/</span>
+  <a href="/admin/products" class="hover:text-uygun-black transition-colors duration-200">პროდუქცია</a>
+  <span aria-hidden="true" class="text-black/20">/</span>
+  <span aria-current="page" class="text-uygun-black font-medium truncate max-w-xs">{{ product.code }}</span>
+</nav>
+
+<div class="mb-6">
+  <h1 class="text-2xl sm:text-3xl font-bold text-uygun-black tracking-tight">პროდუქტის რედაქტირება</h1>
+  <p class="mt-1 text-sm text-uygun-grey mono">კოდი: {{ product.code }}</p>
+</div>
+
+<form method="post" action="/admin/products/{{ product.code | urlencode }}/edit"
+      class="max-w-2xl bg-white rounded-2xl border border-black/[0.07] shadow-card p-6 sm:p-8 space-y-6">
+
+  <div>
+    <label for="f-name" class="block text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">სახელი</label>
+    <input type="text" id="f-name" name="name" value="{{ product.name }}" required maxlength="200"
+           class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white
+                  focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label for="f-price" class="block text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">ფასი (₾)</label>
+      <input type="number" id="f-price" name="price" value="{{ '%.2f'|format(product.price) if product.price else '' }}"
+             step="0.01" min="0" placeholder="0.00 — ცარიელი = ფასი მოთხოვნისთანავე"
+             class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                    focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+      <p class="mt-1 text-xs text-uygun-grey">0 ან ცარიელი = "ფასი მოთხოვნისთანავე"</p>
+    </div>
+    <div>
+      <label for="f-stock" class="block text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">მარაგი</label>
+      <input type="number" id="f-stock" name="stock_qty" value="{{ product.stock_qty }}"
+             step="1" min="0"
+             class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                    focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+      <p class="mt-1 text-xs text-uygun-grey">0 = ცარიელი მარაგი</p>
+    </div>
+  </div>
+
+  <div>
+    <label for="f-category" class="block text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">კატეგორია</label>
+    <input type="text" id="f-category" name="category" value="{{ product.category or '' }}" list="cat-suggestions" maxlength="100"
+           class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white
+                  focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    <datalist id="cat-suggestions">
+      {% for cat in categories %}<option value="{{ cat }}"></option>{% endfor %}
+    </datalist>
+    <p class="mt-1 text-xs text-uygun-grey">ცარიელი = კატეგორიის გარეშე</p>
+  </div>
+
+  <div class="pt-4 border-t border-black/[0.06] flex flex-col sm:flex-row justify-between gap-3">
+    <a href="/admin/products"
+       class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg border border-black/[0.1] text-uygun-grey hover:text-uygun-black hover:bg-uygun-light text-sm font-medium transition-colors duration-200">
+      გაუქმება
+    </a>
+    <button type="submit"
+            class="cta-glow inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-uygun-red text-white text-sm font-semibold hover:bg-uygun-dark shadow-soft hover:shadow-hover transition-all duration-300">
+      შენახვა
+    </button>
+  </div>
+</form>
+
+{% endblock %}

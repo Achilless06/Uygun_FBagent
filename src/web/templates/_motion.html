@@ -1,0 +1,305 @@
+{# ─── Motion layer ──────────────────────────────────────────────────
+   Included once from base.html.
+   Provides:
+     • CSS keyframes for ambient motion (gridDrift, radialPulse,
+       cuePulse, ringDrift) and a reveal-on-scroll transition.
+     • IntersectionObserver script that adds .is-revealed to every
+       [data-reveal] element when it enters the viewport, respecting
+       optional `data-reveal-delay` (milliseconds, exposed as a CSS
+       custom property for transition-delay).
+     • Number count-up for [data-counter] (animates from 0 to its
+       current textContent over 1.2s on reveal).
+     • Full prefers-reduced-motion override.
+──────────────────────────────────────────────────────────────────── #}
+
+<style>
+  /* Reveal initial + final state */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity   0.6s cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+  [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Ambient hero background grid: slow drift */
+  .grid-drift {
+    animation: gridDrift 30s linear infinite;
+  }
+  @keyframes gridDrift {
+    0%   { background-position:   0px   0px; }
+    100% { background-position:  48px  48px; }
+  }
+
+  /* Ambient hero radial glow: gentle opacity oscillation */
+  .radial-pulse {
+    animation: radialPulse 6s ease-in-out infinite;
+  }
+  @keyframes radialPulse {
+    0%, 100% { opacity: 0.6; }
+    50%      { opacity: 1;   }
+  }
+
+  /* Scroll cue: slow opacity pulse layered over the existing bounce */
+  .cue-pulse {
+    animation: cuePulse 2.4s ease-in-out infinite;
+  }
+  @keyframes cuePulse {
+    0%, 100% { opacity: 0.30; }
+    50%      { opacity: 0.75; }
+  }
+
+  /* Decorative concentric rings on dark cards (product detail,
+     contact hours card). Each ring sets its own delay/duration
+     via inline style for independent motion. */
+  .ring-drift {
+    animation: ringDrift var(--ring-duration, 18s)
+               ease-in-out var(--ring-delay, 0s) infinite;
+    transform-origin: center;
+  }
+  @keyframes ringDrift {
+    0%, 100% { transform: rotate(0deg)   scale(1);    opacity: var(--ring-opacity, 1); }
+    50%      { transform: rotate(4deg)   scale(1.02); opacity: calc(var(--ring-opacity, 1) * 0.55); }
+  }
+
+  /* Glyph hover scale used by product_card */
+  .glyph-hover {
+    transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+                color 0.3s ease-out;
+  }
+  .group:hover .glyph-hover {
+    transform: scale(1.06);
+  }
+
+  /* Reduced motion: kill every keyframe and reveal transform. */
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+    .grid-drift,
+    .radial-pulse,
+    .cue-pulse,
+    .ring-drift,
+    .animate-bounce,
+    .animate-pulse {
+      animation: none !important;
+    }
+    html { scroll-behavior: auto !important; }
+  }
+</style>
+
+<script>
+  (function () {
+    'use strict';
+
+    var reduce = window.matchMedia &&
+                 window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function revealAll() {
+      document.querySelectorAll('[data-reveal]').forEach(function (el) {
+        el.classList.add('is-revealed');
+        runCounters(el);
+      });
+    }
+
+    // Count-up: animates [data-counter] from 0 to its rendered integer.
+    function runCounters(scope) {
+      var nodes = scope.matches && scope.matches('[data-counter]')
+        ? [scope]
+        : scope.querySelectorAll('[data-counter]');
+      nodes.forEach(function (n) {
+        if (n.dataset.counterDone === '1') return;
+        var raw = (n.textContent || '').trim();
+        // Only animate purely numeric leading values; preserve suffix.
+        var m = raw.match(/^(\d+)(.*)$/);
+        if (!m) return;
+        var target = parseInt(m[1], 10);
+        var suffix = m[2] || '';
+        if (!isFinite(target) || target <= 0) return;
+        n.dataset.counterDone = '1';
+        var start = performance.now();
+        var dur = 1200;
+        function step(now) {
+          var t = Math.min(1, (now - start) / dur);
+          // Ease-out cubic
+          var eased = 1 - Math.pow(1 - t, 3);
+          n.textContent = Math.round(target * eased) + suffix;
+          if (t < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      });
+    }
+
+    function init() {
+      var targets = document.querySelectorAll('[data-reveal]');
+      if (!targets.length) return;
+
+      // Apply per-element transition-delay from data-reveal-delay (ms).
+      targets.forEach(function (el) {
+        var d = parseInt(el.dataset.revealDelay || '0', 10);
+        if (d > 0) el.style.setProperty('--reveal-delay', d + 'ms');
+      });
+
+      if (reduce || !('IntersectionObserver' in window)) {
+        revealAll();
+        return;
+      }
+
+      var obs = new IntersectionObserver(function (entries, observer) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            runCounters(entry.target);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.12,
+        rootMargin: '0px 0px -40px 0px',
+      });
+
+      targets.forEach(function (el) { obs.observe(el); });
+    }
+
+    // Scroll progress bar fallback: only runs when @supports
+    // (animation-timeline: scroll()) is NOT available.
+    function initScrollProgress() {
+      if (reduce) return;
+      var bar = document.querySelector('.scroll-progress');
+      if (!bar) return;
+      // Detect native support via test element
+      var supportsTimeline = false;
+      try { supportsTimeline = CSS.supports('animation-timeline: scroll()'); } catch (e) {}
+      if (supportsTimeline) return;
+      var pending = false;
+      function update() {
+        var docH = document.documentElement.scrollHeight - window.innerHeight;
+        var pct  = docH > 0 ? (window.scrollY / docH) * 100 : 0;
+        bar.style.width = pct + '%';
+        pending = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!pending) { pending = true; requestAnimationFrame(update); }
+      }, { passive: true });
+      update();
+    }
+
+    // Subtle 3D tilt on .tilt-card → applies rotation to .tilt-card-inner.
+    // Skipped on touch-only devices and under reduced-motion.
+    function initTilt() {
+      if (reduce) return;
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+      var MAX = 4; // max degrees of tilt
+      document.querySelectorAll('.tilt-card').forEach(function (card) {
+        var inner = card.querySelector('.tilt-card-inner');
+        if (!inner) return;
+        var pending = false, rx = 0, ry = 0;
+        card.addEventListener('pointermove', function (e) {
+          var r = card.getBoundingClientRect();
+          var px = (e.clientX - r.left) / r.width;  // 0..1
+          var py = (e.clientY - r.top)  / r.height; // 0..1
+          ry = (px - 0.5) *  MAX * 2;
+          rx = (py - 0.5) * -MAX * 2;
+          if (!pending) {
+            pending = true;
+            requestAnimationFrame(function () {
+              inner.style.setProperty('--tilt-x', rx.toFixed(2) + 'deg');
+              inner.style.setProperty('--tilt-y', ry.toFixed(2) + 'deg');
+              pending = false;
+            });
+          }
+        }, { passive: true });
+        card.addEventListener('pointerleave', function () {
+          inner.style.setProperty('--tilt-x', '0deg');
+          inner.style.setProperty('--tilt-y', '0deg');
+        });
+      });
+    }
+
+    // Hero parallax: translates [data-parallax] elements on scroll.
+    // Speed = data-parallax-speed (px per 100px scrolled, default 8).
+    function initParallax() {
+      if (reduce) return;
+      var nodes = document.querySelectorAll('[data-parallax]');
+      if (!nodes.length) return;
+      var pending = false;
+      function tick() {
+        var y = window.scrollY;
+        nodes.forEach(function (el) {
+          var speed = parseFloat(el.dataset.parallaxSpeed || '8');
+          var offset = (y / 100) * speed;
+          el.style.transform = 'translate3d(0,' + offset.toFixed(2) + 'px,0)';
+        });
+        pending = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!pending) { pending = true; requestAnimationFrame(tick); }
+      }, { passive: true });
+      tick();
+    }
+
+    // Active-state for animated nav underline: marks the current
+    // top-level path on .nav-link anchors.
+    function initActiveNav() {
+      var path = window.location.pathname;
+      document.querySelectorAll('.nav-link').forEach(function (a) {
+        var href = a.getAttribute('href') || '';
+        if (!href || href === '#') return;
+        var isActive = (href === '/' && path === '/') ||
+                       (href !== '/' && path.indexOf(href) === 0);
+        if (isActive) a.classList.add('is-active');
+      });
+    }
+
+    // Mouse-tracked spotlight: updates --spot-x / --spot-y on .spotlight-host
+    // elements. Throttled via rAF. Skipped under reduced-motion or touch-only.
+    function initSpotlight() {
+      if (reduce) return;
+      var hosts = document.querySelectorAll('.spotlight-host');
+      if (!hosts.length) return;
+      // Touch-only devices: no mouse, skip (CSS default position used).
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+
+      hosts.forEach(function (host) {
+        var pending = false;
+        var lastX = 0, lastY = 0;
+        host.addEventListener('pointermove', function (e) {
+          var r = host.getBoundingClientRect();
+          lastX = ((e.clientX - r.left) / r.width)  * 100;
+          lastY = ((e.clientY - r.top)  / r.height) * 100;
+          if (!pending) {
+            pending = true;
+            requestAnimationFrame(function () {
+              host.style.setProperty('--spot-x', lastX + '%');
+              host.style.setProperty('--spot-y', lastY + '%');
+              pending = false;
+            });
+          }
+        }, { passive: true });
+      });
+    }
+
+    function bootAll() {
+      init();
+      initSpotlight();
+      initTilt();
+      initParallax();
+      initScrollProgress();
+      initActiveNav();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootAll);
+    } else {
+      bootAll();
+    }
+  })();
+</script>

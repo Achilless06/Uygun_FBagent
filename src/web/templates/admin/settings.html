@@ -1,0 +1,115 @@
+{% extends "admin/_layout.html" %}
+{% block title %}პარამეტრები — Uygun Georgia admin{% endblock %}
+
+{% block admin_body %}
+
+<div class="mb-6">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
+    <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">სისტემა</span>
+  </div>
+  <h1 class="text-2xl sm:text-3xl font-bold text-uygun-black tracking-tight">პარამეტრები</h1>
+  <p class="mt-1 text-sm text-uygun-grey">ბოტის სტატუსი, ბიუჯეტი და განრიგი.</p>
+</div>
+
+<form method="post" action="/admin/settings" class="max-w-2xl space-y-5">
+
+  {# ── Bot active ──────────────────────────────────────────── #}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 sm:p-6">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-3">ბოტი</p>
+    <label class="flex items-center justify-between gap-4 cursor-pointer">
+      <div>
+        <p class="text-sm font-medium text-uygun-black">ბოტი აქტიურია</p>
+        <p class="text-xs text-uygun-grey mt-0.5">გათიშულ მდგომარეობაში ბოტი არ წარმოქმნის ახალ პოსტებს და არ ხარჯავს API-ს.</p>
+      </div>
+      <span class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200
+                   {% if agent_active %}bg-emerald-500{% else %}bg-black/20{% endif %}">
+        <input type="hidden" name="agent_active" value="false" />
+        <input type="checkbox" name="agent_active" value="true" {% if agent_active %}checked{% endif %}
+               class="peer sr-only" onchange="this.previousElementSibling.parentElement.classList.toggle('bg-emerald-500'); this.previousElementSibling.parentElement.classList.toggle('bg-black/20'); this.nextElementSibling.classList.toggle('translate-x-5');" />
+        <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ml-0.5
+                     {% if agent_active %}translate-x-5{% endif %}"></span>
+      </span>
+    </label>
+  </div>
+
+  {# ── Budget ──────────────────────────────────────────────── #}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 sm:p-6">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-3">თვის ბიუჯეტი</p>
+    <label for="f-budget" class="block text-sm font-medium text-uygun-black mb-2">მაქსიმუმ ($ USD)</label>
+    <input type="number" id="f-budget" name="monthly_budget_usd" value="{{ monthly_budget }}"
+           step="1" min="1" required
+           class="w-32 px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                  focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    <div class="mt-4 pt-4 border-t border-black/[0.06]">
+      <div class="flex items-center gap-3">
+        <div class="flex-1 h-1.5 rounded-full bg-black/[0.06] overflow-hidden">
+          <div class="h-full rounded-full {% if spend.pct >= 100 %}bg-uygun-red{% elif spend.pct >= 80 %}bg-orange-500{% else %}bg-emerald-500{% endif %}"
+               style="width: {{ [spend.pct, 100]|min }}%;"></div>
+        </div>
+        <span class="text-xs text-uygun-grey mono shrink-0">${{ "%.2f"|format(spend.spent_usd) }} / ${{ "%.0f"|format(spend.cap_usd) }} ({{ "%.0f"|format(spend.pct) }}%)</span>
+      </div>
+      <p class="mt-2 text-xs text-uygun-grey">80%-ზე გაფრთხილება Telegram-ში. 100%-ზე ბოტი ავტომატურად ითიშება.</p>
+    </div>
+  </div>
+
+  {# ── Times ──────────────────────────────────────────────── #}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 sm:p-6">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-3">დღიური განრიგი</p>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="f-gen" class="block text-sm font-medium text-uygun-black mb-2">პოსტის გენერაცია</label>
+        <input type="time" id="f-gen" name="post_gen_time" value="{{ post_gen_time }}" required
+               class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                      focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+        <p class="mt-1 text-xs text-uygun-grey">დრო ბათუმის დროით (Asia/Tbilisi).</p>
+      </div>
+      <div>
+        <label for="f-pub" class="block text-sm font-medium text-uygun-black mb-2">პოსტის გამოქვეყნება</label>
+        <input type="time" id="f-pub" name="post_publish_time" value="{{ post_publish_time }}" required
+               class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                      focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+        <p class="mt-1 text-xs text-uygun-grey">დადასტურების შემდეგ.</p>
+      </div>
+    </div>
+  </div>
+
+  {# ── Inventory alerts ───────────────────────────────────── #}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 sm:p-6">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-3">მცირე მარაგის შეტყობინება</p>
+    <label for="f-inv" class="block text-sm font-medium text-uygun-black mb-2">ზღვარი (ერთეული)</label>
+    <input type="number" id="f-inv" name="inventory_alert_threshold" value="{{ inventory_threshold }}"
+           step="1" min="0" required
+           class="w-32 px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white mono
+                  focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    <p class="mt-2 text-xs text-uygun-grey">
+      ყოველდღე 09:00-ზე Telegram-ში მიგიგზავნი იმ პროდუქციის სიას რომელთა მარაგი ≤ ამ ზღვარს. 0 = გათიშულია.
+    </p>
+  </div>
+
+  {# ── Tone mode ──────────────────────────────────────────── #}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 sm:p-6">
+    <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-3">ტონის რეჟიმი</p>
+    <label for="f-tone" class="block text-sm font-medium text-uygun-black mb-2">ბრენდის ხმის რეჟიმი</label>
+    <select id="f-tone" name="tone_mode"
+            class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white
+                   focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200">
+      <option value="default" {% if tone_mode == 'default' %}selected{% endif %}>Default — ძირითადი ბრენდის ხმა</option>
+      <option value="friendly" {% if tone_mode == 'friendly' %}selected{% endif %}>Friendly — უფრო რბილი</option>
+      <option value="technical" {% if tone_mode == 'technical' %}selected{% endif %}>Technical — ფაქტობრივი</option>
+    </select>
+  </div>
+
+  <div class="flex justify-end gap-3 pt-2">
+    <a href="/admin"
+       class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg border border-black/[0.1] text-uygun-grey hover:text-uygun-black hover:bg-uygun-light text-sm font-medium transition-colors duration-200">
+      გაუქმება
+    </a>
+    <button type="submit"
+            class="cta-glow inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-uygun-red text-white text-sm font-semibold hover:bg-uygun-dark shadow-soft hover:shadow-hover transition-all duration-300">
+      შენახვა
+    </button>
+  </div>
+</form>
+
+{% endblock %}

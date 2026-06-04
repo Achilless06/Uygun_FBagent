@@ -217,14 +217,6 @@ def render_for_product(
     return render_text_card(card, output_path)
 
 
-def gemini_generate_image_stub(prompt: str, output_path: Path) -> Path:
-    """Stub: Gemini image generation. Wired in Phase 4 after Telegram confirmation."""
-    raise NotImplementedError(
-        "Gemini image generation requires founder confirmation via Telegram. "
-        "Wired in Phase 4 of the plan."
-    )
-
-
 # ─── Marketing overlay on a real photo ───────────────────────────────────────
 
 

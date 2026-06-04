@@ -1,0 +1,310 @@
+{# Print-ready invoice. Standalone layout (does NOT extend admin/_layout)
+   so the browser's "Print → Save as PDF" produces a clean A4 document.
+   Auth still applied via the route's admin_auth dependency. #}
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ფაქტურა #{{ sale.id }} — {{ brand.LEGAL_ENTITY }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { color-scheme: only light; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Noto Sans Georgian', system-ui, sans-serif;
+      color: #0F0F0F;
+      background: #F5F5F5;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .page {
+      max-width: 800px;
+      margin: 24px auto;
+      background: white;
+      padding: 48px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .toolbar {
+      max-width: 800px;
+      margin: 24px auto 0;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: white;
+      color: #0F0F0F;
+      cursor: pointer;
+    }
+    .btn-primary { background: #BC1215; color: white; border-color: #BC1215; }
+    .btn:hover { transform: translateY(-1px); }
+
+    header.invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 24px;
+      border-bottom: 2px solid #BC1215;
+    }
+    .brand-block { max-width: 60%; }
+    .brand-block h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      letter-spacing: -0.02em;
+    }
+    .brand-block p { margin: 2px 0; color: #555; font-size: 13px; }
+
+    .doc-meta {
+      text-align: right;
+    }
+    .doc-meta .label {
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 10px;
+      color: #555;
+      font-weight: 600;
+    }
+    .doc-meta .number {
+      font-size: 28px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .doc-meta .date {
+      font-size: 13px;
+      color: #555;
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    section.parties {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      padding: 24px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    section.parties h3 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #555;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+    section.parties p { margin: 2px 0; }
+
+    table.items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+    }
+    table.items thead th {
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #555;
+      font-weight: 600;
+      padding: 12px 8px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    table.items thead th.num { text-align: right; }
+    table.items tbody td {
+      padding: 16px 8px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      vertical-align: top;
+    }
+    table.items tbody td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .item-code {
+      font-family: 'Inter', monospace;
+      color: #555;
+      font-size: 12px;
+    }
+    .item-note {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    section.totals {
+      display: flex;
+      justify-content: flex-end;
+      padding: 16px 0;
+    }
+    .totals-box {
+      min-width: 260px;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 8px;
+      font-size: 13px;
+    }
+    .totals-row.grand {
+      border-top: 2px solid #0F0F0F;
+      font-size: 18px;
+      font-weight: 700;
+      padding-top: 14px;
+      margin-top: 8px;
+      letter-spacing: -0.02em;
+    }
+    .totals-row span.num { font-variant-numeric: tabular-nums; }
+
+    footer.invoice-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    footer.invoice-footer h3 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #555;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+    footer.invoice-footer p { margin: 2px 0; font-size: 12px; }
+    .iban {
+      font-family: 'Inter', monospace;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .stamp {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px dashed rgba(0,0,0,0.15);
+      text-align: center;
+      font-size: 11px;
+      color: #555;
+    }
+
+    @media print {
+      body { background: white; }
+      .toolbar { display: none; }
+      .page {
+        max-width: none;
+        margin: 0;
+        padding: 24px;
+        box-shadow: none;
+      }
+    }
+    @page { size: A4; margin: 16mm; }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <a href="/admin/sales" class="btn">← უკან</a>
+    <button type="button" class="btn btn-primary" onclick="window.print()">
+      🖨 ბეჭდვა / PDF
+    </button>
+  </div>
+
+  <div class="page">
+
+    <header class="invoice-header">
+      <div class="brand-block">
+        <h1>{{ brand.LEGAL_ENTITY }}</h1>
+        <p>{{ brand.CONTACT_ADDRESS }}</p>
+        <p>{{ brand.CONTACT_PHONE }}</p>
+      </div>
+      <div class="doc-meta">
+        <div class="label">ფაქტურა</div>
+        <div class="number">#{{ "%06d"|format(sale.id) }}</div>
+        <div class="date">{{ sale.sold_at.strftime('%d.%m.%Y') }}</div>
+      </div>
+    </header>
+
+    <section class="parties">
+      <div>
+        <h3>გამყიდველი</h3>
+        <p><strong>{{ brand.LEGAL_ENTITY }}</strong></p>
+        <p>{{ brand.CONTACT_ADDRESS }}</p>
+        <p>ტელ: {{ brand.CONTACT_PHONE }}</p>
+      </div>
+      <div>
+        <h3>მყიდველი</h3>
+        <p style="color:#555; font-style:italic;">
+          {% if sale.notes %}{{ sale.notes }}{% else %}—{% endif %}
+        </p>
+      </div>
+    </section>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th style="width: 45%;">პროდუქცია</th>
+          <th class="num">რაოდენობა</th>
+          <th class="num">ერთეულის ფასი</th>
+          <th class="num">ჯამი</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div><strong>{{ sale.product_name }}</strong></div>
+            <div class="item-code">კოდი: {{ sale.product_code }}</div>
+          </td>
+          <td class="num">{{ sale.quantity }}</td>
+          <td class="num">{{ "%.2f"|format(sale.unit_price) }} ₾</td>
+          <td class="num"><strong>{{ "%.2f"|format(sale.total_price) }} ₾</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="totals">
+      <div class="totals-box">
+        <div class="totals-row">
+          <span>ქვეჯამი</span>
+          <span class="num">{{ "%.2f"|format(sale.total_price) }} ₾</span>
+        </div>
+        <div class="totals-row grand">
+          <span>ჯამი გადასახდელი</span>
+          <span class="num">{{ "%.2f"|format(sale.total_price) }} ₾</span>
+        </div>
+      </div>
+    </section>
+
+    <footer class="invoice-footer">
+      <div>
+        <h3>გადახდის რეკვიზიტები</h3>
+        <p>{{ brand.BANK_NAME }}</p>
+        <p class="iban">{{ brand.IBAN }}</p>
+        <p>მიმღები: {{ brand.LEGAL_ENTITY }}</p>
+      </div>
+      <div>
+        <h3>კონტაქტი</h3>
+        <p>{{ brand.CONTACT_PHONE }}</p>
+        <p>{{ brand.CONTACT_ADDRESS }}</p>
+        <p>{{ brand.WORKING_HOURS }}</p>
+      </div>
+    </footer>
+
+    <div class="stamp">
+      მადლობა შენაძენისთვის · Uygun Georgia
+    </div>
+
+  </div>
+
+</body>
+</html>

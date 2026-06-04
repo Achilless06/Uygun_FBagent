@@ -12,8 +12,12 @@ When the job fires:
 From there, the founder taps approve / edit / reject as usual. Publishing
 happens on ✅ tap, not on a separate timer — human-in-the-loop is the rule.
 
-`post_publish_time` is kept as a runtime setting for future enhancements
-(e.g. "auto-publish if approved before X") but isn't enforced today.
+Auto-publish-on-time is intentionally NOT implemented. The hard rule
+"human-in-the-loop publishing" makes a timed publish job redundant —
+approval taps in `approval.py` call `facebook.publisher` directly the
+moment the founder hits ✅. `post_publish_time` is retained in the
+settings table for forward compat (UI listing, possible future "publish
+no earlier than X" guard) but is ignored at runtime.
 
 Settings reload: when the founder runs /set_gen_time or /set_active, those
 handlers call `get().reload_settings()` to refresh the cron schedule without
@@ -27,6 +31,7 @@ bot.py's startup.
 
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Optional
 
 from aiogram import Bot
@@ -38,12 +43,34 @@ from src.logging_setup import get_logger
 
 log = get_logger(__name__)
 
+
+def paused_until() -> Optional[date]:
+    """Return the date generation is paused until, or None if not paused.
+
+    Reads the `paused_until` settings key (YYYY-MM-DD). Past dates auto-expire.
+    """
+    value = db.get_setting("paused_until")
+    if not value:
+        return None
+    try:
+        d = datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        log.error("paused_until_invalid_format", value=value)
+        return None
+    if d <= date.today():
+        return None
+    return d
+
 _GENERATION_JOB_ID = "daily_generation"
 _BUDGET_CHECK_JOB_ID = "budget_threshold_check"
 _BACKUP_JOB_ID = "daily_db_backup"
+_INVENTORY_CHECK_JOB_ID = "daily_inventory_check"
 
 # Keep N most recent backups; older ones are deleted to bound disk use.
 _BACKUP_RETENTION = 14
+
+# Default low-stock threshold; founder can override via /admin/settings.
+_INVENTORY_THRESHOLD_DEFAULT = 5
 
 
 class BotScheduler:
@@ -109,6 +136,15 @@ class BotScheduler:
             replace_existing=True,
             misfire_grace_time=3600,
         )
+        # Daily inventory check at 09:00 local — before working day starts,
+        # so founder sees the alert in time to restock for the day.
+        self._scheduler.add_job(
+            self._daily_inventory_check,
+            CronTrigger(hour=9, minute=0, timezone=self._tz_name),
+            id=_INVENTORY_CHECK_JOB_ID,
+            replace_existing=True,
+            misfire_grace_time=3600,
+        )
 
     def _next_run_time_str(self) -> str:
         job = self._scheduler.get_job(_GENERATION_JOB_ID)
@@ -130,6 +166,11 @@ class BotScheduler:
         """The cron job body. Runs in the AsyncIO event loop."""
         if db.get_setting("agent_active", "true") != "true":
             log.info("scheduler_skip_paused")
+            return
+
+        pause_date = paused_until()
+        if pause_date is not None:
+            log.info("scheduler_skip_vacation", paused_until=pause_date.isoformat())
             return
 
         log.info("scheduler_daily_generation_start")
@@ -212,6 +253,50 @@ class BotScheduler:
                 log.info("db_backup_rotated", removed=str(old))
             except Exception:
                 log.warning("db_backup_rotate_failed", path=str(old))
+
+    async def _daily_inventory_check(self) -> None:
+        """Check for products at/below the low-stock threshold; ping admin.
+
+        Threshold is read from settings (`inventory_alert_threshold`), so the
+        founder can tune it from /admin/settings without code changes.
+        """
+        try:
+            threshold_raw = db.get_setting(
+                "inventory_alert_threshold", str(_INVENTORY_THRESHOLD_DEFAULT)
+            )
+            threshold = max(0, int(threshold_raw))
+        except (TypeError, ValueError):
+            threshold = _INVENTORY_THRESHOLD_DEFAULT
+
+        if threshold == 0:
+            log.info("inventory_check_disabled")
+            return
+
+        low = db.list_low_stock_products(threshold)
+        if not low:
+            log.info("inventory_check_clear", threshold=threshold)
+            return
+
+        from src.telegram_bot import messages
+        rows = "".join(
+            messages.INVENTORY_LOW_ROW.format(
+                code=p.code,
+                name=(p.name[:40] + "…") if len(p.name) > 40 else p.name,
+                stock=p.stock_qty,
+            )
+            for p in low[:25]  # cap at 25 to keep Telegram message readable
+        )
+        text = (
+            messages.INVENTORY_LOW_HEADER.format(count=len(low), threshold=threshold)
+            + rows
+            + (f"\n_+{len(low) - 25} მეტი_\n" if len(low) > 25 else "")
+            + messages.INVENTORY_LOW_FOOTER
+        )
+        try:
+            await self._bot.send_message(self._admin_chat_id, text, parse_mode="Markdown")
+            log.info("inventory_alert_sent", count=len(low), threshold=threshold)
+        except Exception:
+            log.exception("inventory_alert_send_failed")
 
 
 # ─── Module-level singleton ──────────────────────────────────────────────────

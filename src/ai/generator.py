@@ -177,8 +177,13 @@ def _format_memories(memories: list[db.Memory]) -> str:
     return "\n".join(f"- [{m.category}] {m.content}" for m in memories)
 
 
-def pick_topic(claude: ClaudeClient, slot: str) -> TopicBrief:
-    """Stage 1 — Claude returns a topic brief as JSON."""
+def pick_topic(gemini: GeminiClient, slot: str) -> TopicBrief:
+    """Stage 1 — Gemini returns a topic brief as JSON.
+
+    Switched from Claude to Gemini Flash (~10x cheaper) — JSON-mode output is
+    clean and structured enough for this picker task. See plan
+    `elegant-waddling-brook.md` (2026-06).
+    """
     today = date.today()
     products = _gather_product_candidates(slot, PRODUCT_CANDIDATES_LIMIT)
     memories = db.list_memories()
@@ -194,18 +199,18 @@ def pick_topic(claude: ClaudeClient, slot: str) -> TopicBrief:
         memories_block=_format_memories(memories),
     )
 
-    response = claude.generate(
+    response = gemini.generate_json(
         prompts.TOPIC_STRATEGIST_SYSTEM,
         user_prompt,
         operation="post_strategist",
         max_tokens=600,
     )
-    raw = ClaudeClient.strip_json_fences(response.text)
+    raw = ClaudeClient.strip_json_fences(response.text)  # belt-and-suspenders: strip any fences
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as e:
         log.error("topic_strategist_bad_json", raw_preview=raw[:200])
-        raise RuntimeError("Claude returned malformed JSON for topic strategist") from e
+        raise RuntimeError("Strategist returned malformed JSON for topic brief") from e
 
     return TopicBrief(
         calendar_slot=data.get("calendar_slot", slot),
@@ -213,8 +218,8 @@ def pick_topic(claude: ClaudeClient, slot: str) -> TopicBrief:
         featured_product_code=data.get("featured_product_code"),
         topic_title=data.get("topic_title", ""),
         angle=data.get("angle", ""),
-        hook_style=data.get("hook_style", "fact"),
-        target_word_count=int(data.get("target_word_count", 80)),
+        hook_style=data.get("hook_style", "descriptive"),
+        target_word_count=int(data.get("target_word_count", 20)),
         cta=data.get("cta", "გვითხარი რა გჭირდება"),
     )
 
@@ -311,14 +316,15 @@ def _make_draft(
     )
 
 
-def validate_with_claude(
-    claude: ClaudeClient, body: str, hashtags: list[str], slot: str
+def validate_post(
+    gemini: GeminiClient, body: str, hashtags: list[str], slot: str
 ) -> tuple[bool, list[guardrails.Violation], Optional[str]]:
-    """Stage 3b — Claude second-pass review.
+    """Stage 3b — Gemini second-pass review (was Claude pre-2026-06).
 
     Returns (approved, list_of_violations, optional_polished_text).
     Violations here are STYLISTIC issues the regex layer misses (marketing
-    speak, audience mismatch, weak hook).
+    speak, audience mismatch, weak hook). Switched to Gemini JSON mode for
+    ~10x cost reduction.
     """
     audience = "B2B (ვულკანიზაცია/სამრეცხაო მფლობელი)" if slot == "B2B" else "B2C (DIY მძღოლი)"
     user_prompt = prompts.POST_VALIDATOR_USER_TEMPLATE.format(
@@ -327,7 +333,7 @@ def validate_with_claude(
         slot=slot,
         audience=audience,
     )
-    response = claude.generate(
+    response = gemini.generate_json(
         prompts.POST_VALIDATOR_SYSTEM,
         user_prompt,
         operation="post_validator",
@@ -453,22 +459,23 @@ def _load_product(code: Optional[str]) -> Optional[db.Product]:
 def generate_draft_for_slot(
     slot: Optional[str] = None,
     *,
-    run_validator: bool = True,
+    run_validator: bool = False,
 ) -> GeneratedPost:
     """Full pipeline. Returns a GeneratedPost with optional violations.
 
-    If `run_validator=False`, skip the Claude second-pass review (faster,
-    cheaper, but you lose the tone/marketing-speak check).
+    `run_validator` defaults to False (2026-06): the LLM second-pass review
+    only catches stylistic issues — regex guardrails already block real
+    safety problems. Skipping saves 50% of the post-generation API budget.
+    Pass True to opt in (e.g. when piloting a new prompt).
     """
     cfg = config.load()
-    claude = ClaudeClient(cfg)
     gemini = GeminiClient(cfg)
 
     chosen_slot = slot or _slot_for_today()
     log.info("generator_start", slot=chosen_slot)
 
     # ─── 1. Pick topic ──
-    brief = pick_topic(claude, chosen_slot)
+    brief = pick_topic(gemini, chosen_slot)
     product = _load_product(brief.featured_product_code)
     log.info(
         "topic_picked",
@@ -490,12 +497,12 @@ def generate_draft_for_slot(
         draft = _make_draft(body, hashtags, product)
         violations = guardrails.validate(draft)
 
-        # 3b — Claude tone validator (optional).
+        # 3b — Gemini tone validator (optional, off by default).
         if run_validator:
-            approved, claude_issues, polished_text = validate_with_claude(
-                claude, body, hashtags, chosen_slot
+            approved, llm_issues, polished_text = validate_post(
+                gemini, body, hashtags, chosen_slot
             )
-            violations.extend(claude_issues)
+            violations.extend(llm_issues)
             polished = polished_text
 
         log.info(

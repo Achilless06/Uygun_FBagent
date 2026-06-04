@@ -152,6 +152,67 @@ class GeminiClient:
             max_tokens=max_tokens,
         )
 
+    @retry(
+        retry=retry_if_exception_type(Exception),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        reraise=True,
+    )
+    def _call_json(self, system: str, user: str, max_tokens: int) -> tuple[str, int, int]:
+        """Single-turn JSON-mode call. Forces application/json output, no fences."""
+        config_obj = genai_types.GenerateContentConfig(
+            system_instruction=system,
+            max_output_tokens=max_tokens,
+            temperature=0.5,
+            thinking_config=genai_types.ThinkingConfig(thinking_budget=0),
+            response_mime_type="application/json",
+        )
+        contents = _to_gemini_contents([{"role": "user", "content": user}])
+        response = self._client.models.generate_content(
+            model=self._model,
+            contents=contents,
+            config=config_obj,
+        )
+        text = response.text or ""
+        usage = response.usage_metadata
+        in_tok = (usage.prompt_token_count if usage else 0) or 0
+        out_tok = (usage.candidates_token_count if usage else 0) or 0
+        return text, in_tok, out_tok
+
+    def generate_json(
+        self,
+        system: str,
+        user: str,
+        *,
+        operation: str = "generate_json",
+        max_tokens: int = 2000,
+    ) -> GeminiResponse:
+        """JSON-mode generation. Use for structured outputs (strategist, validator).
+
+        Replaces ClaudeClient.generate() at JSON-output call sites for ~10x cost
+        reduction. Gemini's response_mime_type="application/json" returns clean
+        JSON without markdown fences, so callers can json.loads() directly.
+        """
+        from src import budget as _budget
+        from src.ai.claude_client import BudgetExhausted
+        if _budget.is_blocked():
+            raise BudgetExhausted("Monthly API budget exhausted — agent auto-paused.")
+        text, in_tok, out_tok = self._call_json(system, user, max_tokens)
+        cost = (in_tok / 1_000_000) * PRICE_INPUT_PER_M + (
+            out_tok / 1_000_000
+        ) * PRICE_OUTPUT_PER_M
+        self._record_spend(operation, in_tok, out_tok, cost)
+        log.info(
+            "gemini_json_call",
+            operation=operation,
+            input_tokens=in_tok,
+            output_tokens=out_tok,
+            cost_usd=round(cost, 6),
+        )
+        return GeminiResponse(
+            text=text, input_tokens=in_tok, output_tokens=out_tok, cost_usd=cost
+        )
+
     @staticmethod
     def _record_spend(operation: str, in_tok: int, out_tok: int, cost: float) -> None:
         with db.session_scope() as s:

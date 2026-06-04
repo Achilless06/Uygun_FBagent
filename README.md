@@ -64,6 +64,7 @@ See [.env.example](.env.example) — they fall into four groups:
 | Anthropic (Claude) | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | console.anthropic.com |
 | Google (Gemini) | `GOOGLE_API_KEY`, `GEMINI_TEXT_MODEL` | aistudio.google.com |
 | Meta (Facebook) | `META_APP_ID`, `META_APP_SECRET`, `FB_PAGE_ID`, `FB_PAGE_ACCESS_TOKEN` | developers.facebook.com (see §"Meta App setup" below) |
+| Admin UI | `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `PUBLIC_BASE_URL` | pick a username + strong password; `PUBLIC_BASE_URL` is `http://localhost:8000` locally / your Railway URL in prod |
 
 Plus runtime knobs: `DRY_RUN` (default `true` for safety), `TIMEZONE` (default `Asia/Tbilisi`), `MONTHLY_BUDGET_USD` (default `20`), `DATABASE_URL`, `LOG_LEVEL`.
 
@@ -158,7 +159,46 @@ tests/
 /test_fb                     Verify Meta token
 /test_schedule               Manual fire of the daily job
 /scheduler                   Show next run time
+
+/upload                      Issue 30-min magic link to /admin/photos
 ```
+
+---
+
+## Public website
+
+Runs on the same process as the bot (port 8000 locally, your Railway URL in prod). Routes:
+
+| URL | Description |
+|---|---|
+| `/` | Homepage — hero, value pillars, featured products, latest FB posts |
+| `/products` | Catalog with category + search + pagination |
+| `/products/{code}` | Product detail (photo or typographic panel + price + CTA) |
+| `/posts` | Published Facebook posts feed |
+| `/posts/{id}` | Single post with full body + FB permalink |
+| `/contact` | Phone, WhatsApp, address, Facebook, Instagram, hours, map |
+| `/healthz` | Health check (returns `{"ok":true}`) |
+| `/admin/photos` | **Protected** — per-product photo upload (Basic Auth + Telegram magic link) |
+
+**Languages:** Georgian (default), English, Turkish. Switch via flag icons in the nav. Stored in a 1-year cookie.
+
+**Dark mode:** Follows OS preference by default; toggle the sun/moon icon to override. Sticky via cookie.
+
+**Motion:** Scroll-triggered reveals + ambient drift + slow background pulses, fully disabled if the visitor has `prefers-reduced-motion: reduce`.
+
+### Admin photo upload (`/admin/photos`)
+
+The site is public, but `/admin/photos` requires auth. Two ways in:
+
+1. **Browser Basic Auth** — browser pops a username/password prompt the first time, keychain remembers it. Set `ADMIN_USERNAME` + `ADMIN_PASSWORD` in `.env`.
+2. **Telegram magic link** — send `/upload` to the bot. It replies with a link valid for 30 minutes; tap it to bypass the password prompt.
+
+What it does:
+- Lists all 478 products with filter pills (missing / uploaded / all) and search by code or name.
+- One file input per row. The selected photo is normalized to JPG (max 1600px, quality 85, EXIF stripped) and saved to `data/photos/{code}.jpg`.
+- The bot's image pipeline (`src/ai/generator.py:resolve_image_path`) automatically prefers founder-uploaded photos over web-scraped fallbacks — no code change needed to wire bot integration.
+
+Security: path-traversal blocked (DB lookup + resolved-path check), CSRF blocked (Origin/Referer must match `PUBLIC_BASE_URL`), decompression-bomb blocked (Pillow `MAX_IMAGE_PIXELS=40M`), constant-time password comparison.
 
 ---
 
@@ -219,12 +259,84 @@ Hard ceiling: `MONTHLY_BUDGET_USD` (default $20). 80%/100% alerts auto-fire.
 
 ## Deploying to Railway (production)
 
-1. Push the repo to GitHub (private is fine; `.env` is gitignored, secrets stay local).
-2. https://railway.app → New Project → Deploy from GitHub repo.
-3. Variables → paste all `.env` keys (or upload `.env` directly in Railway's UI).
-4. Settings → Volumes → create a volume mounted at `/app/data` (preserves SQLite across deploys).
-5. Deploy. Railway reads `Procfile` (`worker: python -m src.telegram_bot.bot`) and `runtime.txt` (Python 3.11.10) automatically.
-6. Watch logs in Railway dashboard. First /generate should fire on schedule.
+Single Railway service runs both the Telegram bot AND the brand website in one
+process (`src/main.py` → `asyncio.gather(run_bot(), run_web())`). Hobby plan ($5/mo) is enough.
+
+### 1. Push to GitHub
+
+```bash
+git push origin main
+```
+
+Private repo is fine; `.env` is gitignored so no secrets leak.
+
+### 2. Create Railway project
+
+1. https://railway.app → log in with GitHub.
+2. **New Project** → **Deploy from GitHub repo** → select this repo.
+3. Railway auto-detects `Procfile` (`worker: python -m src.main`) and `runtime.txt` (Python 3.11.10).
+
+### 3. Paste environment variables
+
+**Variables** tab → paste every key from `.env.example`:
+
+- Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`
+- Anthropic: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`
+- Google: `GOOGLE_API_KEY`, `GEMINI_TEXT_MODEL`, `GEMINI_IMAGE_MODEL`
+- Meta: `META_APP_ID`, `META_APP_SECRET`, `FB_PAGE_ID`, `FB_PAGE_ACCESS_TOKEN`
+- Admin UI: `ADMIN_USERNAME`, `ADMIN_PASSWORD` (pick a strong one), `PUBLIC_BASE_URL=https://<your-railway-domain>` (also used by `/upload` to build the Telegram magic-link)
+- Runtime: `DRY_RUN=false`, `TIMEZONE=Asia/Tbilisi`, `MONTHLY_BUDGET_USD=20`, `LOG_LEVEL=INFO`
+- DB: `DATABASE_URL=sqlite:////data/uygun.db` (absolute path inside the volume)
+
+Railway injects `PORT` automatically — the web app already binds to it.
+
+### 4. Mount a volume for SQLite
+
+**Settings → Volumes → New Volume**:
+- Mount path: `/data`
+- The DB lives at `/data/uygun.db`, backups at `/data/backups/`, photos at `/data/photos/` and `/data/found_photos/`. All survive deploys.
+
+### 5. Healthcheck
+
+**Settings → Healthcheck**:
+- Path: `/healthz`
+- Timeout: 30s
+
+Railway auto-restarts the service if the endpoint stops responding.
+
+### 6. Generate public domain
+
+**Settings → Networking → Generate Domain** → copy the `*.up.railway.app` URL.
+Visit it to confirm the brand site loads.
+
+### 7. Custom domain (uygungeorgia.com)
+
+1. Railway → **Settings → Custom Domain** → add `uygungeorgia.com` AND `www.uygungeorgia.com`.
+2. Railway shows you a CNAME target like `production.up.railway.app`.
+3. At your registrar's DNS panel:
+   - For root `uygungeorgia.com`: add an `ALIAS` or `ANAME` record pointing to the Railway target (or use the registrar's "redirect to www" if ALIAS isn't supported).
+   - For `www.uygungeorgia.com`: add a `CNAME` record pointing to the Railway target.
+4. Wait 5–60 min for DNS propagation; Railway auto-provisions Let's Encrypt HTTPS.
+5. Visit `https://uygungeorgia.com` → green padlock.
+
+### 8. Verify
+
+```bash
+# bot replies
+# (open Telegram → /start)
+
+# site loads
+curl -sS -o /dev/null -w "%{http_code}\n" https://uygungeorgia.com/
+curl -sS https://uygungeorgia.com/healthz   # → {"ok":true}
+```
+
+### Operational notes
+
+- **Logs:** Railway dashboard → Deployments → Logs (tail in real time).
+- **Restart:** Railway auto-restarts on push to `main` or on healthcheck failure.
+- **Rollback:** Deployments tab → previous green deploy → "Redeploy".
+- **DB access:** `railway run sqlite3 /data/uygun.db` (read-only inspection).
+- **First post:** `/test_fb` from Telegram to verify Meta token works before relying on the scheduler.
 
 ---
 

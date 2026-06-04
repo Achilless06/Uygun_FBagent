@@ -150,6 +150,16 @@ CONTACT_ADDRESS = "ბათუმი, მამია ვარშანიძ�
 DELIVERY_NOTE = "უფასო მიწოდება საქართველოს მასშტაბით"
 WORKING_HOURS = "ორშაბათი – შაბათი 10:00 – 19:00"
 
+# Pre-computed digit-only forms used by website href attributes. Keeping them
+# here (rather than recomputing in templates) means a phone-number change only
+# touches one file.
+CONTACT_PHONE_TEL = "+995568909087"           # for href="tel:..."
+CONTACT_WHATSAPP_URL = "https://wa.me/995568909087"  # for href="https://..."
+
+# Public social media URLs (website footer + contact page only).
+FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61572328379507"
+INSTAGRAM_URL = "https://www.instagram.com/uygungeorgia/"
+
 CONTACT_BLOCK = f"📞 {CONTACT_PHONE}\n📍 {CONTACT_ADDRESS}"
 
 # ─── 9. Brand voice rules (brandbook p. 10-12) ───────────────────────────────
@@ -216,9 +226,11 @@ HASHTAGS_INDUSTRY = [
 ]
 HASHTAGS_GEO = ["#ბათუმი", "#აჭარა", "#საქართველო", "#ქართულიავტო"]
 
-# Recommended composition per post: 1 brand + 2 industry + 1–2 geo = 4–5 total.
-MIN_HASHTAGS = 3
-MAX_HASHTAGS = 5
+# Recommended composition per post (minimalist format, 2025+): 1 brand + 1 industry
+# (+ optional 1 geo) = 2–3 total. Reduced from the prior 3–5 to match the new
+# minimal 5-line post format.
+MIN_HASHTAGS = 2
+MAX_HASHTAGS = 3
 
 # ─── 11. Legal / payment details (brandbook p. 21) ───────────────────────────
 # Reserved for future use (e.g. invoice generation). Not included in posts.

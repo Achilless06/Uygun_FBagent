@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 
 from src import db
-from src.web.app import templates
+from src.web.render import render
 
 router = APIRouter()
 
@@ -26,7 +26,7 @@ async def list_products(
     )
     categories = db.list_categories()
     total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
-    return templates.TemplateResponse(
+    return render(
         request,
         "products/list.html",
         {
@@ -46,4 +46,4 @@ async def product_detail(request: Request, code: str) -> HTMLResponse:
     p = db.get_product(code)
     if p is None:
         raise HTTPException(status_code=404, detail="Product not found")
-    return templates.TemplateResponse(request, "products/detail.html", {"product": p})
+    return render(request, "products/detail.html", {"product": p})

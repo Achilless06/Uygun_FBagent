@@ -39,6 +39,7 @@ from sqlalchemy import (
     create_engine,
     event,
     func,
+    or_,
 )
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import (
@@ -270,6 +271,7 @@ DEFAULT_SETTINGS: dict[str, str] = {
     "post_publish_time": "12:00",
     "monthly_budget_usd": "20",
     "tone_mode": "default",
+    "inventory_alert_threshold": "5",
 }
 
 
@@ -585,17 +587,24 @@ def list_products_paginated(
     *,
     category: Optional[str] = None,
     search: Optional[str] = None,
+    has_photo: Optional[bool] = None,
     page: int = 1,
     per_page: int = 24,
 ) -> tuple[list[Product], int]:
-    """Catalog browse for /products page. Returns (rows, total_count)."""
+    """Catalog browse for /products page. Returns (rows, total_count).
+
+    `has_photo` filter is used by the admin upload page to show only the
+    products still missing a photo (or only those that have one).
+    """
     with session_scope() as s:
         q = s.query(Product)
         if category:
             q = q.filter(Product.category == category)
         if search:
             like = f"%{search.strip()}%"
-            q = q.filter(Product.name.ilike(like))
+            q = q.filter(or_(Product.name.ilike(like), Product.code.ilike(like)))
+        if has_photo is not None:
+            q = q.filter(Product.has_photo == has_photo)
         total = q.count()
         rows = (
             q.order_by(Product.code_sort.asc().nullslast(), Product.code.asc())
@@ -604,6 +613,25 @@ def list_products_paginated(
             .all()
         )
         return rows, total
+
+
+def set_product_photo(code: str, has_photo: bool) -> bool:
+    """Flip the `has_photo` flag after upload/delete. Returns True on success."""
+    with session_scope() as s:
+        p = s.get(Product, code)
+        if p is None:
+            return False
+        p.has_photo = has_photo
+        # updated_at auto-bumps via onupdate; nothing else to do.
+        return True
+
+
+def count_products_with_photo() -> tuple[int, int]:
+    """Returns (with_photo, total). Used by the admin upload page progress hint."""
+    with session_scope() as s:
+        total = s.query(Product).count()
+        with_photo = s.query(Product).filter(Product.has_photo.is_(True)).count()
+        return with_photo, total
 
 
 def get_product(code: str) -> Optional[Product]:
@@ -676,3 +704,100 @@ def sales_summary(start: datetime, end: Optional[datetime] = None) -> dict:
         "total_units": total_units,
         "top_products": top_products,
     }
+
+
+# ─── Admin panel helpers (Phase 16) ──────────────────────────────────────────
+
+
+def update_product(
+    code: str,
+    *,
+    name: Optional[str] = None,
+    price: Optional[float] = None,
+    stock_qty: Optional[int] = None,
+    category: Optional[str] = None,
+) -> bool:
+    """Update one or more product fields. Pass None to leave a field unchanged.
+    Pass empty string for category to clear it. Returns True if row existed."""
+    with session_scope() as s:
+        p = s.get(Product, code)
+        if p is None:
+            return False
+        if name is not None:
+            p.name = name.strip()
+        if price is not None:
+            p.price = price if price > 0 else None
+        if stock_qty is not None:
+            p.stock_qty = max(0, stock_qty)
+        if category is not None:
+            p.category = category.strip() or None
+        return True
+
+
+def list_post_drafts(
+    *,
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[PostDraft], int]:
+    """All drafts, newest first, optionally filtered by status. Returns (rows, total)."""
+    with session_scope() as s:
+        q = s.query(PostDraft)
+        if status:
+            q = q.filter(PostDraft.status == status)
+        total = q.count()
+        rows = (
+            q.order_by(PostDraft.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+        for r in rows:
+            _ = r.product.name if r.product else None
+        return rows, total
+
+
+def get_post_draft(draft_id: int) -> Optional[PostDraft]:
+    """Single draft by id with joined product."""
+    with session_scope() as s:
+        row = s.get(PostDraft, draft_id)
+        if row is not None and row.product is not None:
+            _ = row.product.name
+        return row
+
+
+def delete_post_draft(draft_id: int) -> bool:
+    """Delete a draft by id. Returns True if a row was deleted.
+    Refuses to delete drafts that have a published Post linked to them."""
+    with session_scope() as s:
+        row = s.get(PostDraft, draft_id)
+        if row is None:
+            return False
+        linked_post = s.query(Post).filter(Post.draft_id == draft_id).first()
+        if linked_post is not None:
+            return False
+        s.delete(row)
+        return True
+
+
+def list_low_stock_products(threshold: int) -> list[Product]:
+    """Products with 0 < stock_qty <= threshold. Excludes hard-zero items
+    (typically already sold-out and won't unexpectedly drop further)."""
+    with session_scope() as s:
+        return (
+            s.query(Product)
+            .filter(Product.stock_qty > 0, Product.stock_qty <= threshold)
+            .order_by(Product.stock_qty.asc(), Product.code.asc())
+            .all()
+        )
+
+
+def count_post_drafts_by_status() -> dict[str, int]:
+    """Group counts of drafts by status. Used by dashboard."""
+    with session_scope() as s:
+        rows = (
+            s.query(PostDraft.status, func.count(PostDraft.id))
+            .group_by(PostDraft.status)
+            .all()
+        )
+        return {status: count for status, count in rows}

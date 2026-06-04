@@ -21,7 +21,8 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 
 from src import brand, db
-from src.ai.claude_client import ClaudeClient
+from src.ai.claude_client import ClaudeClient  # kept only for strip_json_fences helper
+from src.ai.gemini_client import GeminiClient
 from src.logging_setup import get_logger
 
 log = get_logger(__name__)
@@ -147,10 +148,12 @@ Facebook სტატისტიკა:
 
 
 class Advisor:
-    """Generates and caches daily tips."""
+    """Generates and caches daily tips. Backed by Gemini (was Claude pre-2026-06)
+    — switched for ~10x cost reduction. Tips are cached daily so per-day
+    cost stays minimal regardless."""
 
-    def __init__(self, claude: ClaudeClient) -> None:
-        self._claude = claude
+    def __init__(self, gemini: GeminiClient) -> None:
+        self._gemini = gemini
 
     def get_tips_for_today(self, force_refresh: bool = False) -> list[Tip]:
         today = date.today()
@@ -177,11 +180,11 @@ class Advisor:
         user_prompt = USER_PROMPT_TEMPLATE.format(**ctx)
 
         try:
-            response = self._claude.generate(
+            response = self._gemini.generate_json(
                 SYSTEM_PROMPT, user_prompt, operation="advisor_tips", max_tokens=2000
             )
         except Exception:
-            log.exception("advisor_claude_call_failed")
+            log.exception("advisor_gemini_call_failed")
             return []
 
         cleaned = ClaudeClient.strip_json_fences(response.text)

@@ -1,0 +1,72 @@
+{% extends "admin/_layout.html" %}
+{% block title %}მეხსიერება — Uygun Georgia admin{% endblock %}
+
+{% block admin_body %}
+
+<div class="mb-6">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
+    <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">ბოტის სწავლება</span>
+  </div>
+  <h1 class="text-2xl sm:text-3xl font-bold text-uygun-black tracking-tight">მეხსიერება</h1>
+  <p class="mt-1 text-sm text-uygun-grey">ყოველი ჩანაწერი ყოველთვის ჩაერთვება ბოტის system prompt-ში. სულ {{ memories|length }}.</p>
+</div>
+
+{# ── Add form ────────────────────────────────────────────────── #}
+<form method="post" action="/admin/memories"
+      class="mb-8 max-w-3xl bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 sm:p-6">
+  <p class="text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-3">ახალი ჩანაწერი</p>
+  <label for="m-content" class="sr-only">შინაარსი</label>
+  <textarea id="m-content" name="content" rows="2" required maxlength="1000"
+            placeholder="მაგ.: არასოდეს გამოიყენო სიტყვა „ფანტასტიკური"."
+            class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white
+                   focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200 resize-y"></textarea>
+  <div class="mt-3 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+    <label class="flex items-center gap-2 text-xs text-uygun-grey">
+      კატეგორია:
+      <select name="category" class="px-2 py-1 text-xs border border-black/[0.1] rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-uygun-red/30">
+        {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit"
+            class="cta-glow inline-flex items-center justify-center px-5 py-2 rounded-lg bg-uygun-red text-white text-sm font-semibold hover:bg-uygun-dark shadow-soft hover:shadow-hover transition-all duration-300">
+      + დაამატე
+    </button>
+  </div>
+</form>
+
+{# ── Memory list ────────────────────────────────────────────── #}
+{% if memories %}
+  <ul class="space-y-3">
+    {% for m in memories %}
+      <li class="bg-white rounded-2xl border border-black/[0.07] shadow-card p-5 flex items-start justify-between gap-4">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-uygun-light text-uygun-grey font-medium">{{ m.category }}</span>
+            <span class="text-[10px] text-uygun-grey/70 mono">{{ m.created_at.strftime('%d.%m.%Y') }}</span>
+            {% if m.source != 'manual' %}
+              <span class="text-[10px] text-uygun-grey/70">{{ m.source }}</span>
+            {% endif %}
+          </div>
+          <p class="text-sm text-uygun-black leading-relaxed whitespace-pre-line">{{ m.content }}</p>
+        </div>
+        <form method="post" action="/admin/memories/{{ m.id }}/delete"
+              onsubmit="return confirm('წავშალო ეს მეხსიერება?');" class="shrink-0">
+          <button type="submit"
+                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-uygun-grey hover:text-uygun-red hover:bg-uygun-red/5 transition-colors duration-200"
+                  aria-label="წაშლა">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4" aria-hidden="true">
+              <path d="M3 4h10M6.5 4V2.5h3V4M5 4l.5 9.5h5L11 4M7 7v4M9 7v4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card flex flex-col items-center justify-center py-16 text-center">
+    <p class="text-sm text-uygun-grey">ჯერ ჩანაწერი არ არის. დაამატე პირველი ზემოთ.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

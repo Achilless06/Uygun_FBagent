@@ -77,6 +77,11 @@ class Config:
     fb_page_id: str
     fb_page_access_token: str
 
+    # Admin upload UI (photos page)
+    admin_username: str
+    admin_password: str
+    public_base_url: str
+
     # Runtime
     dry_run: bool
     timezone: str
@@ -85,15 +90,23 @@ class Config:
     log_level: str
 
 
+_cached: Config | None = None
+
+
 def load() -> Config:
-    """Load and return the runtime config. Call once at startup.
+    """Load and return the runtime config. Cached after the first call so
+    repeated load() calls inside hot paths (e.g. per-request auth) don't
+    re-parse the .env file.
 
     Truly required vars (Telegram + Anthropic + Google) raise immediately on
     startup. Meta/Facebook vars are only validated when the publisher actually
     tries to post — this lets you run the bot for Phases 2-4 without yet
     having gone through the Meta App Review setup.
     """
-    return Config(
+    global _cached
+    if _cached is not None:
+        return _cached
+    _cached = Config(
         telegram_bot_token=_required("TELEGRAM_BOT_TOKEN"),
         telegram_admin_chat_id=int(_required("TELEGRAM_ADMIN_CHAT_ID")),
         anthropic_api_key=_required("ANTHROPIC_API_KEY"),
@@ -107,9 +120,16 @@ def load() -> Config:
         meta_app_secret=_optional("META_APP_SECRET", ""),
         fb_page_id=_optional("FB_PAGE_ID", ""),
         fb_page_access_token=_optional("FB_PAGE_ACCESS_TOKEN", ""),
+        # Admin upload UI: username + password protect /admin/photos. Defaults
+        # are intentionally weak to fail an obvious smoke-test if you forget to
+        # set them in .env — change ADMIN_PASSWORD before exposing publicly.
+        admin_username=_optional("ADMIN_USERNAME", "admin"),
+        admin_password=_optional("ADMIN_PASSWORD", "change-me"),
+        public_base_url=_optional("PUBLIC_BASE_URL", "http://localhost:8000"),
         dry_run=_bool("DRY_RUN", True),
         timezone=_optional("TIMEZONE", "Asia/Tbilisi"),
         monthly_budget_usd=float(_optional("MONTHLY_BUDGET_USD", "20")),
         database_url=_optional("DATABASE_URL", f"sqlite:///{DATA_DIR}/uygun.db"),
         log_level=_optional("LOG_LEVEL", "INFO"),
     )
+    return _cached

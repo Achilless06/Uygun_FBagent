@@ -35,3 +35,9 @@ data/overlaid_photos/
 
 # OS
 Thumbs.db
+
+# Local Claude Code config (per-machine)
+.claude/
+
+# One-off dev prompts / scratch
+phase11_prompt.txt

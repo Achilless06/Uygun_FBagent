@@ -1,18 +1,21 @@
-"""One-shot: have Gemini write all Georgian website copy.
+"""LEGACY (Phase-pre-12): one-shot Gemini regeneration of website copy.
 
-Run when you want to refresh the site's wording:
+⚠️  This script writes to src/web/copy.py, which is no longer imported by
+the app. After Phase 12 the active Georgian source is src/web/i18n/ka.py
+(plus en.py / tr.py for English / Turkish). This script's output is a
+useful starting point but you must hand-port the strings into ka.py
+afterwards, then update en.py / tr.py to match.
 
-    python -m scripts.generate_web_copy
+Plan: rewrite this to target i18n/ka.py directly and mirror keys into
+en.py / tr.py via a second Gemini pass per language. Until then, treat
+the output as a draft.
 
-The script:
-  1. Builds a strict system prompt using the brand voice rules + banned phrases
-     from src/brand.py and src/ai/prompts.py.
-  2. Asks Gemini for ONE JSON object containing every copy slot the site needs.
-  3. Validates the JSON has all expected keys (warns if any missing).
-  4. Writes src/web/copy.py as a Python module of string constants.
-  5. Restart the bot to pick up the new copy.
+Original behavior:
+  1. Builds a system prompt using brand voice rules + banned phrases.
+  2. Asks Gemini for ONE JSON object with every copy slot.
+  3. Writes src/web/copy.py.
 
-Cost: one Gemini call (~$0.005). Cached automatically via api_spend table.
+Cost: ~$0.005 per run.
 """
 
 from __future__ import annotations
@@ -46,7 +49,7 @@ EXPECTED_KEYS: dict[str, str] = {
     "values_intro": "1 წინადადება (15-25 სიტყვა). რას ვაკეთებთ მოკლედ. არ ახსენო 'ბათუმიდან', 'ვამარაგებთ მთელ საქართველოს' კი არა, უფრო ცოცხალი ფრაზა.",
 
     # Three customer-facing value cards (NOT internal AI rules — these go on the public landing page).
-    # Each card: title (1-2 words), body (1 short sentence, 10-15 words, შენ-ფორმაში სადაც გამოდის).
+    # Each card: title (1-2 words), body (1 short sentence, 10-15 words, თქვენ-ფორმაში სადაც გამოდის).
     # სტილი: მოკლე, კონკრეტული, წარდგენილი როგორც BENEFIT to მომხმარებლისთვის. არანაირი მონოლოგი
     # AI-ის ხმაში, არანაირი '=', არანაირი ფრჩხილიანი ახსნა.
     "value_1_title": "1-2 სიტყვა. value pillar #1 (მაგ: 'მარაგი' ან 'სიჩქარე').",
@@ -100,8 +103,9 @@ SYSTEM_PROMPT = f"""\
 {brand.MISSION}
 
 ხმის წესები (აუცილებელია, გადახვევა აკრძალულია):
-1. ყოველთვის "შენ" ფორმა მომხმარებლისთვის. "თქვენ" — არასოდეს.
-   "ჩვენ" დასაშვებია მხოლოდ ბრენდის თვითაღწერისთვის (მაგ: 'ჩვენი მაღაზია').
+1. ყოველთვის "თქვენ" ფორმა მომხმარებლისთვის (ვებსაიტი ფორმალურია, განსხვავებით
+   Facebook-პოსტებისგან). მაგ: "დაგვირეკეთ", "თქვენი ბიზნესი", "გიშველით".
+   "შენ" ფორმა — არასოდეს. "ჩვენ" დასაშვებია ბრენდის თვითაღწერისთვის ('ჩვენი მაღაზია').
 2. არასოდეს გამოიყენო [placeholder] ან გაცვეთილი ფრაზა.
 3. აკრძალული ფრაზები: {', '.join(repr(p) for p in brand.BANNED_PHRASES)}.
 4. "საბურავი" (არა "სალტე").
@@ -110,14 +114,14 @@ SYSTEM_PROMPT = f"""\
 
 ტექსტის ხარისხის წესები (კრიტიკული — წინა ვერსიამ ვერ მოახერხა):
 A. ნუ წერ AI-ის სუნით. "შეარჩიე...და ისარგებლე უფასო მიწოდებით" — ეს ცუდია.
-   ცოცხალი ფრაზა: "480+ პროდუქცია მარაგში — დაგვირეკე, გავაგზავნოთ".
-B. გრძელი, ფორმალური წინადადებები აკრძალულია. მოკლე, კონკრეტული, შენ-ფორმაში.
+   ცოცხალი ფრაზა: "480+ პროდუქცია მარაგში — დაგვირეკეთ, გავაგზავნით".
+B. გრძელი, ბიუროკრატიული წინადადებები აკრძალულია. მოკლე, კონკრეტული, თქვენ-ფორმაში.
 C. არ ჩაწერო შინაგანი ლოგიკა ან მსჯელობა (მაგ: 'ცუდი შეკეთება = ავარია'),
    არც განმარტებები ფრჩხილებში. პირდაპირ ბენეფიტი მომხმარებლისთვის.
 D. არ გამოიყენო ემოჯი (ის HTML-ში ცალკე ჩაიდება).
 E. არ გამოიყენო "—" შუა-წინადადებაში, თუ ნამდვილად სასინტაქსოდ არ ჭირდება.
    "დარეკე — გვითხარი — გავაგზავნოთ" სტილი ცუდია.
-F. შესახვევი ფრაზები ცუდია ('მაგრამ შენ ფორმაში'). მარტივად დაწერე.
+F. შესახვევი ფრაზები ცუდია. მარტივად დაწერეთ.
 G. value cards არის SITE VISITOR-ისთვის, არა AI-სთვის. დაიწერე ისე, თითქოს
    მომხმარებელი კითხულობს — რა მისთვის სარგებელია.
 

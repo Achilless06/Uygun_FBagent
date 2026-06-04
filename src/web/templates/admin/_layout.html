@@ -1,0 +1,87 @@
+{# Admin layout — shared shell for every /admin/* page.
+   Provides sidebar nav + sticky topbar; child templates fill `admin_body`. #}
+{% extends "base.html" %}
+{% from "_macros.html" import theme_toggle with context %}
+{% set admin_page = admin_page | default("", true) %}
+
+{% block footer %}{% endblock %}
+{% block whatsapp_fab %}{% endblock %}
+
+{% block body %}
+<div class="page-fade min-h-screen bg-uygun-light dark:bg-uygun-black">
+
+  {# ── Topbar ───────────────────────────────────────────────────── #}
+  <header class="bg-uygun-black sticky top-0 z-40 border-b border-white/10">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-14">
+
+        <div class="flex items-center gap-3">
+          <button id="admin-sidebar-toggle" type="button"
+                  aria-label="მენიუ"
+                  class="lg:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-md hover:bg-white/10 transition-colors duration-200">
+            <span class="w-5 h-px bg-white"></span>
+            <span class="w-5 h-px bg-white"></span>
+            <span class="w-5 h-px bg-white"></span>
+          </button>
+          <a href="/admin" class="flex items-center gap-3 group">
+            <img src="/assets/brand/logo.png" alt="" width="28" height="28"
+                 class="h-7 w-7 rounded-full object-cover ring-1 ring-white/20" />
+            <div class="flex flex-col leading-tight">
+              <span class="text-white font-semibold text-sm tracking-tight">Uygun Georgia</span>
+              <span class="text-white/40 text-[10px] uppercase tracking-widest">ადმინი</span>
+            </div>
+          </a>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <a href="/" class="text-white/70 hover:text-white text-xs sm:text-sm px-3 py-1.5 rounded-md hover:bg-white/10 transition-colors duration-200">
+            <span class="hidden sm:inline">← საიტი</span>
+            <span class="sm:hidden">←</span>
+          </a>
+          <div class="pl-2 ml-1 border-l border-white/15">
+            {{ theme_toggle(size="sm") }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {# ── Body grid: sidebar (lg+) + content ───────────────────────── #}
+  <div class="max-w-[1600px] mx-auto flex">
+
+    {% include "admin/_sidebar.html" %}
+
+    {# Mobile overlay for sidebar #}
+    <div id="admin-sidebar-overlay"
+         class="hidden fixed inset-0 bg-black/40 z-30 lg:hidden"
+         aria-hidden="true"></div>
+
+    {# Main content #}
+    <main id="main" class="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+      {% block admin_body %}{% endblock %}
+    </main>
+
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    var toggle = document.getElementById('admin-sidebar-toggle');
+    var sidebar = document.getElementById('admin-sidebar');
+    var overlay = document.getElementById('admin-sidebar-overlay');
+    if (!toggle || !sidebar || !overlay) return;
+
+    function open()  { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+    function close() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+
+    toggle.addEventListener('click', function () {
+      sidebar.classList.contains('-translate-x-full') ? open() : close();
+    });
+    overlay.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) close();
+    });
+  })();
+</script>
+{% endblock %}

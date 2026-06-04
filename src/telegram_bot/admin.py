@@ -42,13 +42,13 @@ from sqlalchemy import or_
 
 from src import config, db
 from src.ai.advisor import Advisor
-from src.ai.claude_client import ClaudeClient
+from src.ai.gemini_client import GeminiClient
 from src.catalog import importer as catalog_importer
 from src.logging_setup import get_logger
 from src.telegram_bot import messages
 
-# Advisor is initialized lazily on first /tips request so that startup doesn't
-# require Anthropic credentials to be valid.
+# Advisor is initialized lazily on first /tips request. Backed by Gemini
+# (was Claude pre-2026-06) — see plan elegant-waddling-brook.md.
 _advisor: Advisor | None = None
 
 
@@ -56,7 +56,7 @@ def _get_advisor() -> Advisor:
     global _advisor
     if _advisor is None:
         cfg = config.load()
-        _advisor = Advisor(ClaudeClient(cfg))
+        _advisor = Advisor(GeminiClient(cfg))
     return _advisor
 
 log = get_logger(__name__)
@@ -275,6 +275,29 @@ async def handle_menu_help(callback: CallbackQuery) -> None:
 async def handle_help(message: Message) -> None:
     kb = _back_to_menu_kb()
     await message.answer(messages.HELP, reply_markup=kb.as_markup())
+
+
+@router.message(Command("upload"))
+async def handle_upload_link(message: Message) -> None:
+    """Issue a 30-minute magic link to the admin photo upload page.
+
+    The founder taps the link from Telegram → opens in browser → bypasses
+    the Basic Auth password prompt. Each /upload call issues a fresh token.
+    """
+    from src.web.auth import issue_token
+
+    cfg = config.load()
+    token, expires = issue_token()
+    url = f"{cfg.public_base_url.rstrip('/')}/admin/photos?token={token}"
+    minutes = max(1, int((expires - datetime.now(expires.tzinfo)).total_seconds() // 60))
+
+    text = (
+        "📸 *ფოტოების ატვირთვა*\n\n"
+        f"გახსენი ეს ბმული ბრაუზერში — {minutes} წუთის განმავლობაში ვალიდურია:\n\n"
+        f"{url}\n\n"
+        "_ბმული მუშაობს მხოლოდ ერთხელ — შემდეგი ცვლილებისთვის ხელახლა გამოიყენე /upload._"
+    )
+    await message.answer(text, parse_mode="Markdown", disable_web_page_preview=True)
 
 
 # ─── Tips / Advisor ──────────────────────────────────────────────────────────
@@ -1651,6 +1674,7 @@ def _build_settings_view() -> tuple[str, InlineKeyboardBuilder]:
         publish_time=db.get_setting("post_publish_time", "12:00"),
         budget=db.get_setting("monthly_budget_usd", "20"),
         tone=db.get_setting("tone_mode", "default"),
+        paused_until=db.get_setting("paused_until") or "—",
     )
     kb = _back_to_menu_kb()
     return text, kb
@@ -1737,6 +1761,39 @@ async def handle_set_budget(message: Message, command: CommandObject) -> None:
     db.set_setting("monthly_budget_usd", str(value))
     log.info("setting_changed", key="monthly_budget_usd", value=value)
     await message.answer(messages.SETTINGS_UPDATED.format(key="monthly\\_budget\\_usd", value=str(value)))
+
+
+# ─── Vacation mode ──────────────────────────────────────────────────────────
+
+
+@router.message(Command("pause_until"))
+async def handle_pause_until(message: Message, command: CommandObject) -> None:
+    if not command.args:
+        await message.answer(messages.SETTINGS_USAGE.format(command="/pause\\_until"))
+        return
+    arg = command.args.strip()
+    try:
+        target = datetime.strptime(arg, "%Y-%m-%d").date()
+    except ValueError:
+        await message.answer(messages.SETTINGS_INVALID_DATE)
+        return
+    if target <= date.today():
+        await message.answer(messages.SETTINGS_DATE_IN_PAST)
+        return
+    db.set_setting("paused_until", target.isoformat())
+    log.info("vacation_set", paused_until=target.isoformat())
+    await message.answer(messages.PAUSE_SET.format(date=target.isoformat()))
+
+
+@router.message(Command("resume"))
+async def handle_resume(message: Message) -> None:
+    current = db.get_setting("paused_until")
+    if not current:
+        await message.answer(messages.PAUSE_NONE)
+        return
+    db.set_setting("paused_until", "")
+    log.info("vacation_cleared", was_until=current)
+    await message.answer(messages.PAUSE_CLEARED)
 
 
 # ─── Spend ───────────────────────────────────────────────────────────────────

@@ -16,7 +16,7 @@ def _draft(body: str, **kwargs) -> Draft:
     """Build a Draft with sensible defaults for tests."""
     return Draft(
         body_text=body,
-        hashtags=kwargs.get("hashtags", ["#UygunGeorgia", "#ვულკანიზაცია", "#ბათუმი", "#საბურავი"]),
+        hashtags=kwargs.get("hashtags", ["#UygunGeorgia", "#ვულკანიზაცია", "#ბათუმი"]),
         featured_product_code=kwargs.get("featured_product_code"),
         featured_product_price=kwargs.get("featured_product_price"),
         featured_product_stock_qty=kwargs.get("featured_product_stock_qty", 1),
@@ -167,11 +167,14 @@ class TestStockGrounding:
 
 class TestHashtags:
     def test_in_range_passes(self):
-        d = _draft("test body", hashtags=["#a", "#b", "#c", "#d"])
+        # New minimal format: 2-3 hashtags
+        d = _draft("test body", hashtags=["#a", "#b"])
         assert guardrails.check_hashtags(d) == []
+        d3 = _draft("test body", hashtags=["#a", "#b", "#c"])
+        assert guardrails.check_hashtags(d3) == []
 
     def test_too_few_warns(self):
-        d = _draft("test body", hashtags=["#a", "#b"])
+        d = _draft("test body", hashtags=["#a"])
         violations = guardrails.check_hashtags(d)
         assert len(violations) == 1
         assert violations[0].severity is Severity.WARN

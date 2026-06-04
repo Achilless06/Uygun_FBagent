@@ -411,6 +411,18 @@ BUDGET_BLOCK_100 = (
     "1. გაზარდე ბიუჯეტი: /set\\_budget `25`\n"
     "2. ან აქტიური გახადე: /set\\_active `true`"
 )
+
+# ─── Inventory low-stock alert ───────────────────────────────────────────────
+
+INVENTORY_LOW_HEADER = (
+    "📦 *მცირე მარაგი — {count} პროდუქცია*\n\n"
+    "შემდეგი პროდუქცია ≤ `{threshold}` ერთეულზე ჩამოვიდა:\n\n"
+)
+INVENTORY_LOW_ROW = "• `{code}` · {name} — *{stock}* ცალი\n"
+INVENTORY_LOW_FOOTER = (
+    "\n💡 _admin-ში შესწორება: /admin/products_\n"
+    "_ზღვრის შეცვლა: /admin/settings_"
+)
 PREVIEW_REJECTED = "❌ უარყოფილია. ვცდი სხვა მიდგომით…"
 PREVIEW_EDIT_PROMPT = (
     "✏️ *რას შეცვალო?*\n\n"
@@ -527,19 +539,32 @@ SETTINGS_VIEW = (
     "• `post_gen_time` = `{gen_time}`\n"
     "• `post_publish_time` = `{publish_time}`\n"
     "• `monthly_budget_usd` = `{budget}`\n"
-    "• `tone_mode` = `{tone}`\n\n"
+    "• `tone_mode` = `{tone}`\n"
+    "• `paused_until` = `{paused_until}`\n\n"
     "*შესაცვლელად:*\n"
     "/set\\_active `true` ან `false`\n"
     "/set\\_gen\\_time `HH:MM`\n"
     "/set\\_publish\\_time `HH:MM`\n"
-    "/set\\_budget `USD`"
+    "/set\\_budget `USD`\n"
+    "/pause\\_until `YYYY-MM-DD`  ·  /resume"
 )
 
 SETTINGS_UPDATED = "✅ შენახულია: `{key}` = `{value}`"
 SETTINGS_INVALID_TIME = "❌ არასწორი ფორმატი. გამოიყენე `HH:MM` (მაგ: `11:30`)."
 SETTINGS_INVALID_BOOL = "❌ მიუთითე `true` ან `false`."
 SETTINGS_INVALID_NUMBER = "❌ მიუთითე რიცხვი."
+SETTINGS_INVALID_DATE = "❌ არასწორი ფორმატი. გამოიყენე `YYYY-MM-DD` (მაგ: `2026-06-15`)."
+SETTINGS_DATE_IN_PAST = "❌ თარიღი მომავალში უნდა იყოს."
 SETTINGS_USAGE = "გამოყენება: `{command}` `მნიშვნელობა`"
+
+PAUSE_SET = (
+    "🌴 *შვებულების რეჟიმი ჩართულია*\n\n"
+    "ავტომატური გენერაცია შეჩერებულია `{date}`-მდე.\n"
+    "ამ თარიღამდე არ მოგწერ პოსტის approval-ისთვის.\n\n"
+    "_გასათიშად:_ /resume"
+)
+PAUSE_CLEARED = "✅ შვებულების რეჟიმი გათიშულია — ბოტი ისევ ნორმალურად მუშაობს."
+PAUSE_NONE = "ℹ️ შვებულების რეჟიმი არ არის ჩართული."
 
 # ─── Spend ───────────────────────────────────────────────────────────────────
 

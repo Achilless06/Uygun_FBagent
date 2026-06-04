@@ -1,24 +1,92 @@
 <!DOCTYPE html>
-<html lang="ka">
+<html lang="{{ t.HTML_LANG }}" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Uygun Georgia — ვულკანიზაცია · ავტოქიმია · ხელსაწყოები{% endblock %}</title>
-  <meta name="description" content="{% block description %}ბათუმში დაფუძნებული ვულკანიზაციის, ავტოსამრეცხაოს ქიმიისა და ხელსაწყოების მომმარაგებელი. 480+ პროდუქტი მარაგში. უფასო მიწოდება საქართველოს მასშტაბით.{% endblock %}">
-  <link rel="icon" type="image/png" href="/assets/brand/logo.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Uygun Georgia — ვულკანიზაციის და ავტომობილის ქიმიის პროდუქცია, ბათუმი" />
+  <meta name="theme-color" content="#0F0F0F" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <title>{% block title %}Uygun Georgia{% endblock %}</title>
 
-  <meta property="og:title" content="{% block og_title %}Uygun Georgia{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}ვულკანიზაცია · ავტოქიმია · ხელსაწყოები — ბათუმი{% endblock %}">
-  <meta property="og:image" content="/assets/brand/logo.png">
-  <meta property="og:type" content="website">
+  {# Open Graph / social #}
+  <meta property="og:site_name" content="Uygun Georgia" />
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
+  <meta property="og:title" content="{% block og_title %}Uygun Georgia{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}ვულკანიზაცია და ავტოქიმია — ბათუმი{% endblock %}" />
+  <meta property="og:locale" content="{{ t.HTML_LANG }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/assets/brand/logo.png" type="image/png" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Georgian:wght@400;500;600;700&display=swap" rel="stylesheet">
+  {# ── JSON-LD structured data (Google rich results) ─────────────── #}
+  {% block jsonld %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://uygun.ge/#business",
+    "name": "Uygun Georgia",
+    "image": "/assets/brand/logo.png",
+    "telephone": "{{ brand.CONTACT_PHONE }}",
+    "email": "info@uygun.ge",
+    "url": "https://uygun.ge/",
+    "priceRange": "₾₾",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "მამია ვარშანიძის 189",
+      "addressLocality": "Batumi",
+      "addressRegion": "Adjara",
+      "postalCode": "6000",
+      "addressCountry": "GE"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 41.6168,
+      "longitude": 41.6367
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      "opens": "10:00",
+      "closes": "19:00"
+    },
+    "areaServed": { "@type": "Country", "name": "Georgia" },
+    "sameAs": [
+      "{{ brand.FACEBOOK_URL }}",
+      "{{ brand.INSTAGRAM_URL }}"
+    ]
+  }
+  </script>
+  {% endblock %}
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  {# ── Theme: apply class BEFORE first paint to avoid flash ──── #}
+  <script>
+    (function () {
+      try {
+        var m = (document.cookie.match(/(?:^|;\s*)theme=(light|dark)/) || [])[1];
+        var dark = m ? (m === 'dark')
+                     : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.documentElement.classList.add('dark');
+      } catch (e) {}
+    })();
+  </script>
+
+  {# Google Fonts — preconnect + preload critical weights for faster paint #}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Georgian:wght@400;500;600;700&display=swap" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Georgian:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  {# Tailwind CDN — pinned to v3.4.16. CDN is a Tailwind-known DX choice
+     (warns in console for prod), but works fine for our traffic level.
+     Pinning means a future Tailwind v4 won't silently break us. #}
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           colors: {
@@ -31,59 +99,557 @@
           fontFamily: {
             sans: ['Inter', 'Noto Sans Georgian', 'system-ui', 'sans-serif'],
           },
+          letterSpacing: {
+            tighter: '-0.04em',
+            tight:   '-0.025em',
+          },
+          boxShadow: {
+            'soft':  '0 1px 2px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.06)',
+            'hover': '0 1px 2px rgba(0,0,0,0.08), 0 24px 64px rgba(0,0,0,0.10)',
+            'card':  '0 0 0 1px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.06)',
+          },
+          transitionTimingFunction: {
+            'smooth': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          },
         },
       },
-    }
+    };
   </script>
 
   <style>
-    html { scroll-behavior: smooth; }
+    /* Base font rendering */
+    * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     body { font-family: 'Inter', 'Noto Sans Georgian', system-ui, sans-serif; }
-    .ka  { font-family: 'Noto Sans Georgian', 'Inter', system-ui, sans-serif; }
+
+    /* Subtle noise texture on light surfaces */
+    .texture-noise {
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 128px 128px;
+    }
+
+    /* Hairline separator */
+    .hairline { border-color: rgba(0,0,0,0.08); }
+
+    /* Page transition fade */
+    .page-fade { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Smooth focus ring — 4px offset for keyboard nav clarity */
+    :focus-visible { outline: 2px solid #BC1215; outline-offset: 4px; border-radius: 2px; }
+    a:focus-visible, button:focus-visible { outline-offset: 4px; }
+
+    /* ── Gradient text — used on hero H1 line 1 ──────────────────────
+       White → soft red bottom shimmer; stays legible at all weights. */
+    .text-gradient-brand {
+      background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, #ff6b6e 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .dark .text-gradient-brand {
+      background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 50%, #ff7a7d 100%);
+    }
+
+    /* ── Mouse spotlight — hero ambient interactive glow ──────────────
+       Tracked by JS in _motion.html. Falls back to a static glow when
+       JS off or reduced-motion. */
+    .spotlight-host { position: relative; }
+    .spotlight-host::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        circle 480px at var(--spot-x, 30%) var(--spot-y, 40%),
+        rgba(188,18,21,0.10) 0%,
+        rgba(188,18,21,0.04) 35%,
+        transparent 65%
+      );
+      transition: background 0.25s ease-out;
+      z-index: 1;
+    }
+
+    /* ── Primary CTA glow halo — on hover ─────────────────────────── */
+    .cta-glow {
+      position: relative;
+      isolation: isolate;
+    }
+    .cta-glow::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 9999px;
+      background: radial-gradient(closest-side, rgba(188,18,21,0.55), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease-out;
+      z-index: -1;
+      filter: blur(8px);
+    }
+    .cta-glow:hover::before { opacity: 1; }
+
+    /* ── Product card animated accent line ───────────────────────────
+       Sits along the bottom edge, grows from left on hover. */
+    .card-accent-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      width: 0;
+      background: linear-gradient(90deg, #BC1215, #ff6b6e);
+      transition: width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+      pointer-events: none;
+    }
+    .group:hover .card-accent-line,
+    .group:focus-visible .card-accent-line { width: 100%; }
+
+    /* ── Diagonal SVG section divider helper ──────────────────────────
+       Subtle 1-degree tilt at section boundaries; uses currentColor. */
+    .divider-slash {
+      display: block;
+      width: 100%;
+      height: 24px;
+      color: rgba(0,0,0,0.06);
+    }
+    .dark .divider-slash { color: rgba(255,255,255,0.06); }
+
+    /* ── Smooth theme transition — crossfade colors when toggling ─── */
+    html.theme-anim,
+    html.theme-anim *,
+    html.theme-anim *::before,
+    html.theme-anim *::after {
+      transition:
+        background-color 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+        color            0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+        border-color     0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+        fill             0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+        stroke           0.42s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+    }
+
+    /* ── Scroll progress bar — fixed, top of viewport, brand red ───
+       Uses CSS scroll-driven animation when supported; falls back to
+       a JS-set inline width otherwise. */
+    .scroll-progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #BC1215, #ff6b6e);
+      width: 0%;
+      z-index: 80;
+      pointer-events: none;
+      transform-origin: left center;
+      transition: opacity 0.3s ease-out;
+    }
+    @supports (animation-timeline: scroll()) {
+      .scroll-progress {
+        width: 100%;
+        transform: scaleX(0);
+        animation: scrollGrow linear;
+        animation-timeline: scroll(root);
+      }
+      @keyframes scrollGrow { to { transform: scaleX(1); } }
+    }
+
+    /* ── Tilt card — subtle 3D perspective on hover ─────────────────
+       JS in _motion.html sets --tilt-x / --tilt-y on pointermove. */
+    .tilt-card {
+      transform-style: preserve-3d;
+      transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+      will-change: transform;
+    }
+    .tilt-card-inner {
+      transform: perspective(900px)
+                 rotateX(var(--tilt-x, 0deg))
+                 rotateY(var(--tilt-y, 0deg));
+      transition: transform 0.2s ease-out;
+      transform-style: preserve-3d;
+    }
+
+    /* ── Animated nav underline ───────────────────────────────────── */
+    .nav-link {
+      position: relative;
+    }
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      left: 12px; right: 12px; bottom: 6px;
+      height: 1.5px;
+      background: currentColor;
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+      opacity: 0.85;
+    }
+    .nav-link:hover::after,
+    .nav-link:focus-visible::after,
+    .nav-link.is-active::after {
+      transform: scaleX(1);
+    }
+
+    /* ── View Transitions API — smooth cross-page fade where supported */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 0.28s;
+      animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    /* ── Language switcher dropdown menu ─────────────────────────── */
+    .lang-menu {
+      opacity: 0;
+      transform: scale(0.95) translateY(-4px);
+      transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+      pointer-events: none;
+      visibility: hidden;
+    }
+    .lang-menu.is-open {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    /* ── WhatsApp FAB — subtle ambient pulse halo ──────────────────── */
+    .wa-fab-pulse { position: relative; isolation: isolate; }
+    .wa-fab-pulse::before {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 9999px;
+      background: rgba(37, 211, 102, 0.35);
+      z-index: -1;
+      animation: waFabPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes waFabPulse {
+      0%, 100% { transform: scale(1);    opacity: 0.55; }
+      50%      { transform: scale(1.18); opacity: 0;    }
+    }
+
+    /* ── Reduced motion: kill new layers + Tailwind animations ──────
+       WCAG 2.3.3 Animation from Interactions. Disables Tailwind's
+       animate-pulse / animate-bounce / animate-spin used decoratively,
+       plus our custom drift/parallax layers. */
+    @media (prefers-reduced-motion: reduce) {
+      html.theme-anim,
+      html.theme-anim * { transition: none !important; }
+      .scroll-progress { display: none !important; }
+      .tilt-card-inner { transform: none !important; }
+      .nav-link::after { transition: none !important; }
+      .animate-pulse, .animate-bounce, .animate-spin,
+      .grid-drift, .radial-pulse, .ring-drift, .cue-pulse,
+      .wa-fab-pulse::before,
+      [data-reveal] { animation: none !important; }
+      [data-reveal] { opacity: 1 !important; transform: none !important; }
+    }
+
+    /* Mobile menu */
+    #mobile-menu { transition: opacity 0.25s ease, transform 0.25s ease; }
+    #mobile-menu.hidden { opacity: 0; pointer-events: none; transform: translateY(-8px); display: none !important; }
+
+    /* Number / code badge mono font */
+    .mono { font-variant-numeric: tabular-nums; }
+
+    /* ── Dark mode override layer ─────────────────────────────────────
+       Covers the common Tailwind utility classes the site uses without
+       editing every template. Apple-style: deep black surfaces (#0F0F0F),
+       layered surfaces tinted with white opacity, brand red kept intact.
+    ──────────────────────────────────────────────────────────────────── */
+    .dark { color-scheme: dark; }
+    .dark body { background-color: #0F0F0F; color: #ffffff; }
+
+    /* Surfaces — layered hierarchy for depth in dark mode:
+       body (#0F0F0F) < section bg-uygun-light (slightly lifted)
+                      < card bg-white (further elevated) */
+    .dark .bg-white { background-color: rgba(255,255,255,0.04) !important; }
+    .dark .bg-uygun-light { background-color: rgba(255,255,255,0.02) !important; }
+
+    /* Text */
+    .dark .text-uygun-black { color: #ffffff !important; }
+    .dark .text-uygun-grey { color: rgba(255,255,255,0.55) !important; }
+    .dark .placeholder\:text-uygun-grey\/50::placeholder { color: rgba(255,255,255,0.35) !important; }
+
+    /* Decorative low-opacity uygun-black text (giant code glyphs etc.) */
+    .dark .text-uygun-black\/10 { color: rgba(255,255,255,0.07) !important; }
+    .dark .text-uygun-black\/15 { color: rgba(255,255,255,0.10) !important; }
+    .dark .text-uygun-black\/25 { color: rgba(255,255,255,0.20) !important; }
+    .dark .text-uygun-grey\/40 { color: rgba(255,255,255,0.30) !important; }
+    .dark .text-uygun-grey\/50 { color: rgba(255,255,255,0.35) !important; }
+
+    /* Decorative low-opacity black surfaces / borders */
+    .dark .bg-black\/\[0\.04\] { background-color: rgba(255,255,255,0.04) !important; }
+    .dark .bg-black\/\[0\.05\] { background-color: rgba(255,255,255,0.05) !important; }
+    .dark .bg-black\/25 { background-color: rgba(255,255,255,0.25) !important; }
+    .dark .border-black\/\[0\.04\] { border-color: rgba(255,255,255,0.06) !important; }
+    .dark .border-black\/\[0\.05\] { border-color: rgba(255,255,255,0.07) !important; }
+    .dark .text-black\/20 { color: rgba(255,255,255,0.20) !important; }
+    .dark .text-black\/25 { color: rgba(255,255,255,0.25) !important; }
+
+    /* Subtle black-on-white borders → translucent white in dark */
+    .dark [class*="border-black/[0.06]"],
+    .dark [class*="border-black/[0.07]"],
+    .dark [class*="border-black/[0.08]"],
+    .dark [class*="border-black/[0.1]"] {
+      border-color: rgba(255,255,255,0.08) !important;
+    }
+    .dark .border-t.border-black\/\[0\.06\],
+    .dark .border-t.border-black\/\[0\.07\] { border-color: rgba(255,255,255,0.08) !important; }
+
+    /* Hover state of light grey -> dark elevated */
+    .dark .hover\:bg-uygun-light:hover { background-color: rgba(255,255,255,0.06) !important; }
+
+    /* Card shadows: tighter in dark mode (deep void), keep hairline ring */
+    .dark .shadow-card {
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06),
+        0 4px 24px rgba(0,0,0,0.5) !important;
+    }
+    .dark .shadow-hover {
+      box-shadow:
+        0 1px 2px rgba(0,0,0,0.6),
+        0 24px 64px rgba(0,0,0,0.55) !important;
+    }
+    .dark .shadow-soft {
+      box-shadow:
+        0 1px 2px rgba(0,0,0,0.4),
+        0 8px 32px rgba(0,0,0,0.35) !important;
+    }
+
+    /* Form inputs */
+    .dark input[type="text"],
+    .dark select {
+      background-color: rgba(255,255,255,0.04) !important;
+      color: #ffffff !important;
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+    .dark input[type="text"]:focus,
+    .dark select:focus {
+      border-color: rgba(188,18,21,0.7) !important;
+    }
+
+    /* bg-uygun-black represents the brand-dark surface; in dark mode it
+       stays dark (header/hero/footer/CTA/dark cards remain dark on dark).
+       Pagination & search button — small accent uses of bg-uygun-black
+       on light grids — invert to white-on-black via inline dark: classes
+       in those specific templates. */
   </style>
+
+  {% include "_motion.html" %}
+
+  {% block head_extra %}{% endblock %}
 </head>
-<body class="bg-uygun-light text-uygun-black antialiased">
+<body class="bg-white text-uygun-black dark:bg-uygun-black dark:text-white antialiased transition-colors duration-300">
+
+  {# Scroll progress bar — fixed at top, fills L→R as user scrolls #}
+  <div class="scroll-progress" aria-hidden="true"></div>
+
+  {# Skip-to-main link — WCAG 2.4.1 Bypass Blocks. Hidden until focused via Tab. #}
+  <a href="#main"
+     class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100]
+            focus:px-4 focus:py-2 focus:rounded-lg focus:bg-uygun-black focus:text-white
+            focus:text-sm focus:font-medium focus:shadow-hover">
+    {{ t.SKIP_TO_MAIN }}
+  </a>
 
   {% block body %}{% endblock %}
 
-  <footer class="bg-uygun-black text-white/80 mt-20">
-    <div class="max-w-7xl mx-auto px-8 py-12 grid md:grid-cols-3 gap-8">
-      <div>
-        <div class="flex items-center gap-3 mb-4">
-          <img src="/assets/brand/logo.png" alt="Uygun Georgia" class="h-10 w-10 rounded-full object-cover bg-white p-1">
-          <span class="text-xl font-semibold text-white">Uygun Georgia</span>
+  {% block whatsapp_fab %}
+  {# ─── Floating WhatsApp button (public site only) ─────────────── #}
+  <a href="{{ brand.CONTACT_WHATSAPP_URL }}?text={{ t.WHATSAPP_DEFAULT_GREETING | urlencode }}"
+     target="_blank" rel="noopener"
+     aria-label="{{ t.WHATSAPP_FAB_LABEL }}"
+     class="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center
+            w-14 h-14 rounded-full bg-[#25D366] text-white shadow-hover
+            hover:scale-110 hover:bg-[#1FAE53] focus-visible:scale-110
+            transition-all duration-300 ease-smooth wa-fab-pulse">
+    <svg viewBox="0 0 32 32" fill="currentColor" class="w-7 h-7" aria-hidden="true">
+      <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035.888 2.722.888.817 0 2.15-.515 2.42-1.246.143-.38.143-.66.115-.83-.057-.302-.27-.371-.586-.534-.13-.07-1.36-.7-1.474-.7zm-3.337 7.875h-.014c-1.604 0-3.18-.437-4.554-1.246l-.327-.193-3.39.886.9-3.305-.215-.336a8.945 8.945 0 0 1-1.39-4.804c.014-4.91 4.04-8.91 9-8.91a8.98 8.98 0 0 1 6.38 2.64 8.83 8.83 0 0 1 2.65 6.293c-.013 4.91-4.04 8.91-8.94 8.91zm7.58-16.464A10.808 10.808 0 0 0 15.65 5.4c-5.91 0-10.74 4.81-10.78 10.71a10.73 10.73 0 0 0 1.43 5.36L4.97 27l5.65-1.48a10.793 10.793 0 0 0 5.16 1.31h.01c5.93 0 10.76-4.81 10.77-10.72a10.66 10.66 0 0 0-3.16-7.59z"/>
+    </svg>
+  </a>
+  {% endblock %}
+
+  {% block footer %}
+  {# ─── Footer ─────────────────────────────────────────────────────── #}
+  <footer class="bg-uygun-black text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+
+        {# Brand column #}
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            {# Decorative: brand text appears next to logo, so logo alt is empty (WCAG 1.1.1) #}
+            <img src="/assets/brand/logo.png" alt=""
+                 width="40" height="40" loading="lazy" decoding="async"
+                 class="h-10 w-10 rounded-full object-cover" />
+            <span class="font-semibold text-lg tracking-tight">Uygun Georgia</span>
+          </div>
+          <p class="text-sm text-white/50 leading-relaxed max-w-xs">
+            {{ t.FOOTER_TAGLINE }}
+          </p>
+
+          {# Language switcher (dropdown — opens upward) + theme toggle #}
+          {% from "_macros.html" import theme_toggle, lang_switcher with context %}
+          <div class="flex items-center gap-2 pt-2">
+            {{ lang_switcher(size="md", direction="up") }}
+            {{ theme_toggle(size="md") }}
+          </div>
         </div>
-        <p class="text-sm leading-relaxed">
-          {{ copy.FOOTER_TAGLINE }}
-        </p>
+
+        {# Nav column #}
+        <div class="space-y-4">
+          <p class="text-xs font-semibold uppercase tracking-widest text-white/30">{{ t.FOOTER_PAGES }}</p>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/" class="text-white/60 hover:text-white transition-colors duration-200">{{ t.NAV_HOME }}</a></li>
+            <li><a href="/products" class="text-white/60 hover:text-white transition-colors duration-200">{{ t.NAV_PRODUCTS }}</a></li>
+            <li><a href="/posts" class="text-white/60 hover:text-white transition-colors duration-200">{{ t.NAV_POSTS }}</a></li>
+            <li><a href="/contact" class="text-white/60 hover:text-white transition-colors duration-200">{{ t.NAV_CONTACT }}</a></li>
+          </ul>
+        </div>
+
+        {# Contact column #}
+        <div class="space-y-4">
+          <p class="text-xs font-semibold uppercase tracking-widest text-white/30">{{ t.FOOTER_CONTACT }}</p>
+          <ul class="space-y-3 text-sm">
+            <li>
+              <a href="tel:{{ brand.CONTACT_PHONE_TEL }}"
+                 class="flex items-center gap-2 text-white/60 hover:text-white transition-colors duration-200">
+                <span class="w-4 h-4 inline-flex items-center justify-center">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+                    <path d="M2 3a1 1 0 011-1h2.5a1 1 0 01.97.757l.75 3a1 1 0 01-.285.98L5.72 7.95a8 8 0 004.33 4.33l1.213-1.215a1 1 0 01.98-.285l3 .75A1 1 0 0116 12.5V15a1 1 0 01-1 1C7.163 16 0 8.837 0 1a1 1 0 011-1h2.5a1 1 0 011 1z" fill="currentColor" stroke="none"/>
+                  </svg>
+                </span>
+                {{ brand.CONTACT_PHONE }}
+              </a>
+            </li>
+            <li>
+              <a href="{{ brand.CONTACT_WHATSAPP_URL }}" target="_blank" rel="noopener"
+                 class="flex items-center gap-2 text-white/60 hover:text-white transition-colors duration-200">
+                <span class="w-4 h-4 inline-flex items-center justify-center">
+                  <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+                    <path d="M8 0C3.582 0 0 3.582 0 8c0 1.41.368 2.733 1.012 3.879L0 16l4.255-1.115A7.95 7.95 0 008 16c4.418 0 8-3.582 8-8s-3.582-8-8-8zm3.93 11.07c-.16.45-.93.88-1.28.94-.32.054-.73.076-1.18-.074-.27-.09-.62-.21-1.06-.41-1.87-.808-3.09-2.68-3.18-2.805-.09-.126-.73-.97-.73-1.85 0-.88.46-1.31.624-1.49.16-.18.35-.225.47-.225h.337c.108 0 .254.04.388.3.14.265.476 1.17.517 1.255.04.084.066.183.013.293-.052.108-.08.175-.16.27-.08.094-.168.21-.24.283-.08.077-.163.16-.07.315.093.154.413.68.887 1.103.61.546 1.125.714 1.28.793.154.08.243.066.333-.04.09-.108.387-.45.49-.605.103-.154.206-.128.347-.077.14.05.89.42 1.043.497.153.077.255.115.292.18.038.065.038.377-.12.827z"/>
+                  </svg>
+                </span>
+                WhatsApp
+              </a>
+            </li>
+            <li class="flex items-start gap-2 text-white/60">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 mt-0.5 shrink-0">
+                <path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13A6.5 6.5 0 008 1.5zM0 8a8 8 0 1116 0A8 8 0 010 8zm8-3.5a.75.75 0 01.75.75v3.19l2.03 1.17a.75.75 0 01-.75 1.3l-2.25-1.3A.75.75 0 017.25 9V5.25A.75.75 0 018 4.5z" clip-rule="evenodd"/>
+              </svg>
+              {{ t.BRAND_HOURS }}
+            </li>
+            <li class="flex items-start gap-2 text-white/60">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 mt-0.5 shrink-0">
+                <path fill-rule="evenodd" d="M8 1a5.5 5.5 0 100 11A5.5 5.5 0 008 1zm0 1.5a4 4 0 110 8 4 4 0 010-8zM8 5a1 1 0 100 2 1 1 0 000-2zm-.25 3a.75.75 0 000 1.5h.5a.75.75 0 000-1.5h-.5z" clip-rule="evenodd"/>
+              </svg>
+              <span>{{ t.BRAND_ADDRESS }}</span>
+            </li>
+          </ul>
+
+          {# Social icons — snappy hover with subtle scale #}
+          <div class="flex items-center gap-2 pt-2">
+            <a href="{{ brand.FACEBOOK_URL }}" target="_blank" rel="noopener"
+               aria-label="Facebook"
+               class="w-9 h-9 rounded-full bg-white/5 hover:bg-[#1877F2]/15 border border-white/10 hover:border-[#1877F2]/40
+                      flex items-center justify-center text-white/60 hover:text-white
+                      transition-all duration-200 hover:scale-110 hover:-translate-y-0.5">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+                <path d="M16 8.05C16 3.603 12.418 0 8 0S0 3.604 0 8.05c0 4.018 2.914 7.343 6.75 7.95V10.37H4.72V8.05H6.75V6.3c0-2.013 1.194-3.125 3.022-3.125.875 0 1.791.157 1.791.157v1.98h-1.009c-.994 0-1.304.62-1.304 1.257V8.05h2.219l-.354 2.32H9.25V16c3.836-.607 6.75-3.932 6.75-7.95z"/>
+              </svg>
+            </a>
+            <a href="{{ brand.INSTAGRAM_URL }}" target="_blank" rel="noopener"
+               aria-label="Instagram"
+               class="w-9 h-9 rounded-full bg-white/5 hover:bg-uygun-red/15 border border-white/10 hover:border-uygun-red/40
+                      flex items-center justify-center text-white/60 hover:text-white
+                      transition-all duration-200 hover:scale-110 hover:-translate-y-0.5">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+                <path d="M8 0C5.83 0 5.555.01 4.703.048 3.85.088 3.273.222 2.768.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
       </div>
-      <div>
-        <h4 class="text-white font-semibold mb-3">ნავიგაცია</h4>
-        <ul class="space-y-2 text-sm">
-          <li><a href="/" class="hover:text-uygun-red transition-colors">მთავარი</a></li>
-          <li><a href="/products" class="hover:text-uygun-red transition-colors">პროდუქცია</a></li>
-          <li><a href="/posts" class="hover:text-uygun-red transition-colors">სიახლეები</a></li>
-          <li><a href="/contact" class="hover:text-uygun-red transition-colors">კონტაქტი</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="text-white font-semibold mb-3">კონტაქტი</h4>
-        <ul class="space-y-2 text-sm">
-          <li><a href="tel:+995568909087" class="hover:text-uygun-red transition-colors">+995 568 90 90 87</a></li>
-          <li><a href="https://wa.me/995568909087" target="_blank" rel="noopener" class="hover:text-uygun-red transition-colors">WhatsApp</a></li>
-          <li>ბათუმი, მამია ვარშანიძის 189</li>
-          <li class="text-white/60">ორშ – შაბ, 10:00 – 19:00</li>
-        </ul>
-      </div>
-    </div>
-    <div class="border-t border-white/10">
-      <div class="max-w-7xl mx-auto px-8 py-5 text-xs text-white/50 flex flex-col md:flex-row justify-between gap-2">
-        <span>© {{ now_year() if now_year is defined else 2026 }} Uygun Georgia. ყველა უფლება დაცულია.</span>
-        <span>შპს უიგუნ ჯორჯია</span>
+
+      {# Bottom bar #}
+      <div class="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <p class="text-xs text-white/30">© {{ now().year if now is defined else '2025' }} Uygun Georgia. {{ t.FOOTER_RIGHTS }}.</p>
+        <div class="flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-uygun-red inline-block"></span>
+          <span class="text-xs text-white/30">{{ t.FOOTER_LOCATION }}</span>
+        </div>
       </div>
     </div>
   </footer>
+  {% endblock %}
 
-  {% block scripts %}{% endblock %}
+  {# Language + theme cookie helpers — used by switcher buttons across the site #}
+  <script>
+    function setLang(code) {
+      document.cookie = 'lang=' + code + '; path=/; max-age=31536000; samesite=lax';
+      var url = new URL(window.location);
+      url.searchParams.delete('lang');
+      window.location.replace(url.pathname + (url.search ? url.search : '') + url.hash);
+    }
+    function syncThemeToggleLabels() {
+      var isDark = document.documentElement.classList.contains('dark');
+      document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+        // Label describes the action the next click performs.
+        var next = isDark ? b.getAttribute('data-label-light')
+                          : b.getAttribute('data-label-dark');
+        if (next) b.setAttribute('aria-label', next);
+      });
+    }
+    // Language switcher: single delegated handler for all .lang-switcher
+    // instances on the page. Click trigger toggles dropdown; click outside,
+    // Escape, or selecting an item closes all.
+    (function () {
+      function closeAll() {
+        document.querySelectorAll('.lang-menu.is-open').forEach(function (m) {
+          m.classList.remove('is-open');
+          var trig = document.getElementById(m.getAttribute('aria-labelledby'));
+          if (trig) trig.setAttribute('aria-expanded', 'false');
+        });
+      }
+      document.addEventListener('click', function (e) {
+        var trigger = e.target.closest('.lang-trigger');
+        if (trigger) {
+          var menu = trigger.nextElementSibling;
+          var isOpen = menu.classList.contains('is-open');
+          closeAll();
+          if (!isOpen) {
+            menu.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+          }
+          return;
+        }
+        // Click outside any switcher → close.
+        if (!e.target.closest('.lang-switcher')) closeAll();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeAll();
+      });
+    })();
+
+    function toggleTheme() {
+      var root = document.documentElement;
+      var doToggle = function () {
+        root.classList.add('theme-anim');
+        var isDark = root.classList.toggle('dark');
+        document.cookie = 'theme=' + (isDark ? 'dark' : 'light') +
+                          '; path=/; max-age=31536000; samesite=lax';
+        syncThemeToggleLabels();
+        setTimeout(function () { root.classList.remove('theme-anim'); }, 480);
+      };
+      if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.startViewTransition(doToggle);
+      } else {
+        doToggle();
+      }
+    }
+    // Sync labels on initial load (pre-paint script may have added .dark)
+    if (document.readyState !== 'loading') syncThemeToggleLabels();
+    else document.addEventListener('DOMContentLoaded', syncThemeToggleLabels);
+  </script>
+
 </body>
 </html>

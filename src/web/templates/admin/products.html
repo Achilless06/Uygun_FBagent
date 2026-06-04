@@ -1,0 +1,129 @@
+{% extends "admin/_layout.html" %}
+{% block title %}პროდუქცია — Uygun Georgia admin{% endblock %}
+
+{% block admin_body %}
+
+<div class="mb-6">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
+    <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">კატალოგი</span>
+  </div>
+  <h1 class="text-2xl sm:text-3xl font-bold text-uygun-black tracking-tight">პროდუქცია</h1>
+  <p class="mt-1 text-sm text-uygun-grey">სულ {{ total }} პროდუქცია — შეცვალე ფასი, მარაგი, კატეგორია.</p>
+</div>
+
+{# ── Filter bar ────────────────────────────────────────────────── #}
+<form method="get" action="/admin/products" class="flex flex-col sm:flex-row gap-3 mb-5">
+  <label for="search-input" class="sr-only">ძებნა</label>
+  <div class="relative flex-1 max-w-md">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+         class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-uygun-grey pointer-events-none" aria-hidden="true">
+      <circle cx="7" cy="7" r="4.5"/>
+      <path d="M10.5 10.5l3 3" stroke-linecap="round"/>
+    </svg>
+    <input type="search" id="search-input" name="search" value="{{ search }}"
+           placeholder="ძებნა კოდით ან სახელით..."
+           autocomplete="off"
+           class="w-full pl-9 pr-4 py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
+                  focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red
+                  transition-all duration-200" />
+  </div>
+
+  <label for="category-select" class="sr-only">კატეგორია</label>
+  <select id="category-select" name="category"
+          class="px-3 py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
+                 focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red
+                 transition-all duration-200">
+    <option value="">ყველა კატეგორია</option>
+    {% for cat in categories %}
+      <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit"
+          class="px-5 py-2 rounded-lg bg-uygun-black text-white text-sm font-medium
+                 hover:bg-uygun-red transition-colors duration-200 shrink-0">
+    ძებნა
+  </button>
+</form>
+
+{# ── Products table ──────────────────────────────────────────── #}
+{% if products %}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-uygun-light border-b border-black/[0.07]">
+          <tr class="text-left text-xs uppercase tracking-widest text-uygun-grey">
+            <th class="px-4 py-3 font-semibold">კოდი</th>
+            <th class="px-4 py-3 font-semibold">სახელი</th>
+            <th class="px-4 py-3 font-semibold">კატეგორია</th>
+            <th class="px-4 py-3 font-semibold text-right">ფასი</th>
+            <th class="px-4 py-3 font-semibold text-right">მარაგი</th>
+            <th class="px-4 py-3 font-semibold text-right">ფოტო</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+            <tr class="border-b border-black/[0.05] last:border-0 hover:bg-uygun-light/40 transition-colors duration-150">
+              <td class="px-4 py-3 mono text-uygun-grey">{{ p.code }}</td>
+              <td class="px-4 py-3 text-uygun-black font-medium max-w-xs truncate" title="{{ p.name }}">{{ p.name }}</td>
+              <td class="px-4 py-3 text-uygun-grey text-xs">{{ p.category or '—' }}</td>
+              <td class="px-4 py-3 text-right mono text-uygun-black font-medium">
+                {% if p.price and p.price > 0 %}{{ "%.2f"|format(p.price) }} ₾{% else %}<span class="text-uygun-grey">—</span>{% endif %}
+              </td>
+              <td class="px-4 py-3 text-right mono {% if p.stock_qty > 0 %}text-emerald-700{% else %}text-uygun-grey{% endif %}">
+                {{ p.stock_qty }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                {% if p.has_photo %}
+                  <span class="inline-flex items-center gap-1 text-xs text-emerald-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>კი
+                  </span>
+                {% else %}
+                  <span class="text-xs text-uygun-grey">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <a href="/admin/products/{{ p.code | urlencode }}/edit"
+                   class="inline-flex items-center gap-1 text-xs text-uygun-red hover:underline font-medium">
+                  რედაქტირება →
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="bg-white rounded-2xl border border-black/[0.07] shadow-card flex flex-col items-center justify-center py-20 text-center">
+    <p class="text-uygun-grey text-sm">პროდუქცია ვერ მოიძებნა.</p>
+  </div>
+{% endif %}
+
+{# ── Pagination ──────────────────────────────────────────────── #}
+{% if total_pages > 1 %}
+  <nav class="mt-8 flex items-center justify-center gap-1" aria-label="გვერდები">
+    {% if page > 1 %}
+      <a href="?{{ base_qs }}&page={{ page - 1 }}"
+         class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08] text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">←</a>
+    {% endif %}
+    {% for pg in range(1, total_pages + 1) %}
+      {% if pg == page %}
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-uygun-black text-white dark:bg-white dark:text-uygun-black text-sm font-medium">{{ pg }}</span>
+      {% elif pg == 1 or pg == total_pages or (pg >= page - 2 and pg <= page + 2) %}
+        <a href="?{{ base_qs }}&page={{ pg }}"
+           class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08] text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">{{ pg }}</a>
+      {% elif pg == page - 3 or pg == page + 3 %}
+        <span class="inline-flex items-center justify-center w-9 h-9 text-uygun-grey text-sm">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}
+      <a href="?{{ base_qs }}&page={{ page + 1 }}"
+         class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08] text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">→</a>
+    {% endif %}
+  </nav>
+{% endif %}
+
+{% endblock %}
