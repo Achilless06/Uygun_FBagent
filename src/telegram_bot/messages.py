@@ -311,12 +311,12 @@ GENERATE_LOADING = "🤖 _ვამზადებ პოსტს… (10-30 წ
 GENERATE_USAGE = (
     "📝 *პოსტის გენერაცია*\n\n"
     "გამოყენება:\n"
-    "`/generate` — დღევანდელი სლოტი\n"
-    "`/generate B2B` — კონკრეტული სლოტი\n\n"
-    "_სლოტები: B2B, B2C, EDU, BTS, LITE, Promo_"
+    "`/generate` — Daily (ნაგულისხმევი) · მოთხოვნადი პროდუქცია\n"
+    "`/generate B2B` — კონკრეტული სლოტი (ხელით override)\n\n"
+    "_სლოტები: Daily, B2B, B2C, EDU, BTS, LITE, Promo_"
 )
 GENERATE_FAILED = "❌ გენერაცია ვერ მოხერხდა. დეტალები ლოგებშია."
-GENERATE_INVALID_SLOT = "❌ უცნობი სლოტი. სცადე: B2B / B2C / EDU / BTS / LITE / Promo"
+GENERATE_INVALID_SLOT = "❌ უცნობი სლოტი. სცადე: Daily / B2B / B2C / EDU / BTS / LITE / Promo"
 
 # Preview message — sent as a caption when there's an image, or as a plain
 # message when no image. Caption limit on Telegram is 1024 chars.

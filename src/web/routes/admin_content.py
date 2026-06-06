@@ -3,7 +3,8 @@
 Wraps the `content-creator` skill's two analyzers (brand voice + SEO) and
 extends them with Uygun-specific brand checks from `src/brand.py`:
 
-  • Detects formal "თქვენ" markers that violate the bot's "შენ" voice rule
+  • Detects informal "შენ" markers that violate the bot's formal "თქვენ" rule
+    (Phase 18, 2026-06 — both bot drafts and the website now use "თქვენ")
   • Flags BANNED_PHRASES the brand explicitly avoids
   • Flags the forbidden "სალტე" (must be "საბურავი")
   • Surfaces LOVED_PHRASES present (positive signal)
@@ -13,6 +14,8 @@ sentence variety, SEO score, keyword density.
 """
 
 from __future__ import annotations
+
+import re
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
@@ -29,23 +32,32 @@ router = APIRouter(prefix="/admin/content", tags=["admin"])
 _voice = BrandVoiceAnalyzer()
 _seo = SEOOptimizer()
 
+# Word-boundary regex so e.g. "შემოგვიარე" doesn't false-match the formal
+# "შემოგვიარეთ" (same prefix). Mirrors guardrails._SHEN_PATTERNS.
+_SHEN_PATTERNS = tuple(
+    re.compile(rf"\b{re.escape(m)}\b") for m in brand.SHEN_MARKERS
+)
+
 
 def _uygun_brand_check(text: str) -> dict:
     """Layer Uygun-specific checks on top of the generic analyzer.
 
-    Bot voice = "შენ" form. Website voice = "თქვენ" form. This check
-    targets BOT drafts (Telegram-bound), so flags "თქვენ" markers.
+    Phase 18 (2026-06): both bot drafts and the public site speak "თქვენ".
+    This check flags informal "შენ" markers that the founder needs to clean up.
     """
-    lower = text.lower()
     banned_found = [p for p in brand.BANNED_PHRASES if p in text]
-    tkven_found = [m for m in brand.TKVEN_MARKERS if m in text]
+    shen_found: list[str] = []
+    for pattern in _SHEN_PATTERNS:
+        m = pattern.search(text)
+        if m:
+            shen_found.append(m.group(0))
     loved_found = [p for p in brand.LOVED_PHRASES if p in text]
     has_forbidden_tire = brand.TIRE_FORBIDDEN in text
 
     # Compute a 0-100 brand compliance score.
     score = 100
     score -= len(banned_found) * 25      # each banned phrase = -25
-    score -= len(tkven_found) * 10       # each formal marker = -10
+    score -= len(shen_found) * 10        # each informal marker = -10
     score -= 25 if has_forbidden_tire else 0
     score += min(len(loved_found) * 5, 15)  # cap +15 bonus
     score = max(0, min(100, score))
@@ -53,7 +65,7 @@ def _uygun_brand_check(text: str) -> dict:
     return {
         "score": score,
         "banned_found": banned_found,
-        "tkven_found": tkven_found,
+        "shen_found": shen_found,
         "loved_found": loved_found,
         "has_forbidden_tire": has_forbidden_tire,
     }

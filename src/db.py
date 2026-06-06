@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy import (
@@ -95,7 +95,7 @@ class PostDraft(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     target_date: Mapped[datetime] = mapped_column(Date, nullable=False, index=True)
-    # B2B | B2C | EDU | BTS | LITE | Promo — see brand.WEEKLY_CALENDAR
+    # Daily (default, Phase 18) | B2B | B2C | EDU | BTS | LITE | Promo — see brand.SLOT_DESCRIPTIONS
     calendar_slot: Mapped[str] = mapped_column(String, nullable=False)
     body_text: Mapped[str] = mapped_column(Text, nullable=False)
     # JSON-serialized array of hashtag strings.
@@ -465,6 +465,32 @@ def list_sales(limit: int = 20) -> list[Sale]:
     """Return recent sales (newest first)."""
     with session_scope() as s:
         return s.query(Sale).order_by(Sale.sold_at.desc()).limit(limit).all()
+
+
+def list_top_selling_codes(days: int = 30, limit: int = 50) -> list[str]:
+    """Product codes ranked by total quantity sold over the last N days.
+
+    Used by the post generator's Daily-mode candidate gathering (Phase 18) —
+    'demanded product' = top sellers from the recent window. Returns an empty
+    list if no sales have been logged (cold-start case the generator handles
+    by falling back to in-stock + priced products).
+    """
+    from sqlalchemy import func as sqlf
+
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    with session_scope() as s:
+        rows = (
+            s.query(
+                Sale.product_code,
+                sqlf.sum(Sale.quantity).label("qty"),
+            )
+            .filter(Sale.sold_at >= cutoff)
+            .group_by(Sale.product_code)
+            .order_by(sqlf.sum(Sale.quantity).desc())
+            .limit(limit)
+            .all()
+        )
+        return [r.product_code for r in rows]
 
 
 def get_sale(sale_id: int) -> Optional[Sale]:

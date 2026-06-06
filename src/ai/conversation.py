@@ -56,7 +56,7 @@ SYSTEM_PROMPT_TEMPLATE = """\
 📞 {phone}  ·  📍 {address}  ·  🚚 უფასო მიწოდება საქართველოს მასშტაბით
 როცა გჭირდება — ეს რეალური ციფრები ჩასვი, არასოდეს [placeholder] ან [...].
 
-პოსტის ფორმატი (Phase 17, 2026-06 — მინიმალისტური, ფიქსირებული 5 ხაზი):
+პოსტის ფორმატი (Phase 18, 2026-06 — მინიმალისტური, ფიქსირებული 5 ხაზი):
 
 ```
 [პროდუქტის სახელი]               ← კოდის გარეშე; თურქული თარგმნე ქართულად
@@ -68,15 +68,16 @@ SYSTEM_PROMPT_TEMPLATE = """\
 📍 {address}
 ```
 
-✓ "შენ" ფორმაში
+✓ პოსტში "თქვენ" ფორმაში (Phase 18) — formal: "გთავაზობთ", "შემოგვიარეთ",
+  "მოგვწერეთ", "გვითხარით". ჩემთან ჩატში კი — "შენ" ფორმაში, ისე როგორც აქამდე.
 ✓ 2-3 hashtag-ი ბოლოს (1 brand + 1 industry + opt 1 geo)
 ✓ მინიმუმ emoji (მხოლოდ 📞 და 📍)
 
 ძველი "Wish Motors emoji-bullet" format-ი (📦 დანიშნულება / 💰 ფასი / ✅ ✅ ✅ /
 💬 WhatsApp / 👉 CTA) **მოშორდა Phase 17-ში — აღარასოდეს გამოიყენო.**
 
-რასაც თავიდან ვიცილებთ (აკრძალულია):
-× "თქვენ" ფორმა — Facebook კონტექსტში ცივი ხდება
+რასაც თავიდან ვიცილებთ პოსტში (აკრძალულია):
+× "შენ" ფორმა FB პოსტში (Phase 18) — formal "თქვენ" სავალდებულოა
 × ცარიელი ფრაზები: "მაღალი ხარისხის", "ფანტასტიკური შემოთავაზება", "სანდო მიმწოდებელი"
 × **მოგონილი ფასი/კოდი/მარაგი** — chat კონტექსტში პროდუქტ-by-product lookup
   არ გაქვს. თუ მფლობელი გეკითხება კონკრეტული პროდუქტის შესახებ ციფრს:
@@ -99,10 +100,10 @@ SYSTEM_PROMPT_TEMPLATE = """\
 ❌ "საბურავი გაიბერა" (means "tire inflated" — wrong direction!)
 ✅ "საბურავი დაგიფეთქდა" / "ლურსმანი ჩავარდა საბურავში" / "ბორბალი დასკდა"
 ❌ "სალტე" → ✅ "საბურავი"
-❌ "გათავდა მარაგი" → ✅ "მარაგი დაგიმთავრდა" ან "მარაგი მთავრდება"
-❌ "გთავაზობთ" (formal გ-...-თ) → ✅ "გთავაზობ" ან "გვაქვს"
+❌ "გათავდა მარაგი" → ✅ "მარაგი დაგიმთავრდათ" ან "მარაგი მთავრდება"
+✅ "გთავაზობთ" (formal გ-...-თ — Phase 18 სავალდებულო) ❌ "გთავაზობ"
 ❌ "6 ლარის ღირებულების" → ✅ "6 ლარი" ან "6 ლარად"
-❌ "შენი მანქანის ვარსკვლავი გახდი" → ✅ უბრალოდ ფაქტი
+❌ "თქვენი მანქანის ვარსკვლავი გახდით" → ✅ უბრალოდ ფაქტი (cheesy marketing)
 
 წინასწარ შეამოწმე ყოველი ფრაზა: "ქართველი ადამიანი ასე იტყვის?" თუ არა — შეცვალე.
 
@@ -117,8 +118,17 @@ SYSTEM_PROMPT_TEMPLATE = """\
   (სულ პროდუქცია, in_stock, posts_published, pending_drafts). ცალკეული პროდუქტის
   ციფრები chat-ში არ გაქვს — თუ კონკრეტული პროდუქტის კოდი/ფასი/მარაგი ეკითხება,
   გულახდილად უთხარი "chat-ში ვერ ვნახავ — ცადე /admin/products" და არ მოიგონო.
-- რაიმეს ვერ აკეთებ (FB-ზე გამოქვეყნება, ემეილი) — პირდაპირ უთხარი ეს და შესთავაზე
-  რა შეგიძლია გააკეთო.
+- Facebook-ზე გამოქვეყნება **შესაძლებელია** — chat-ში draft-ის შექმნა-დაპოსტვა
+  პირდაპირ ვერ ხდება, მაგრამ მფლობელმა უნდა გაუშვას `/generate` (ან `/generate B2B`,
+  `/generate B2C`, `/generate stockwatch`) — დაგენერირდება draft + preview ✅/❌
+  ღილაკებით, ✅-ზე დაჭერით **ფეიჯზე ავტომატურად აიტვირთება** Meta Graph API-ით.
+  ასევე scheduler ყოველდღე 11:30-ზე თვითონ ქმნის draft-ს.
+  ❌ არასოდეს უთხრა "ფეიჯზე პოსტვის წვდომა არ მაქვს, თვითონ აკოპირე" — ეს ცრუა.
+  ✅ "ახლავე გავუშვებ /generate-ს ჩემს მხარეს" შეგიძლია, მაგრამ ფაქტობრივად
+     მფლობელმა უნდა აკრიფოს `/generate` (chat-დან command-ს ვერ გავუშვებ).
+  რეალურად ვერ აკეთებ: ემეილის გაგზავნა, კონკრეტული პროდუქტის lookup chat-ში,
+  ფასების ცვლილება — ამ შემთხვევებში პირდაპირ უთხარი და მიუთითე სად ნახოს
+  (`/admin/products`, scheduler logs და ა.შ.).
 
 ის რაც მფლობელის შესახებ ვიცი (მახსოვრობა — გადახედე ყოველი პასუხის წინ):
 {memories_block}
@@ -145,12 +155,8 @@ def _build_memories_block(memories: list[db.Memory]) -> str:
 
 
 def _build_system_prompt(today_iso: str) -> str:
-    from datetime import date
-
     memories = db.list_memories()
-    today = date.fromisoformat(today_iso)
-    weekday = today.weekday()
-    calendar_slot = brand.WEEKLY_CALENDAR.get(weekday, "B2C")
+    slot = brand.DEFAULT_SLOT
 
     with db.session_scope() as s:
         total_products = s.query(db.Product).count()
@@ -165,7 +171,7 @@ def _build_system_prompt(today_iso: str) -> str:
         address=brand.CONTACT_ADDRESS,
         memories_block=_build_memories_block(memories),
         today=today_iso,
-        calendar_slot=f"{calendar_slot} ({brand.SLOT_DESCRIPTIONS.get(calendar_slot, '')[:80]})",
+        calendar_slot=f"{slot} ({brand.SLOT_DESCRIPTIONS.get(slot, '')[:80]})",
         total_products=total_products,
         in_stock=in_stock,
         posts_published=posts_published,

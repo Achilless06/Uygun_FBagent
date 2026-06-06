@@ -89,8 +89,14 @@ class GeneratedPost:
 
 
 def _slot_for_today() -> str:
-    """Look up today's calendar slot from brand.WEEKLY_CALENDAR."""
-    return brand.WEEKLY_CALENDAR.get(date.today().weekday(), "B2C")
+    """Default slot for an unattended generation run.
+
+    Phase 18 (2026-06): the weekday-based rotation was removed — every day uses
+    the "Daily" slot, which picks a demand-ranked product (top sellers from the
+    last 30 days, falling back to in-stock + priced). Manual `/generate B2B`
+    style overrides still work and route through the legacy slot logic.
+    """
+    return brand.DEFAULT_SLOT
 
 
 def _season_hint_for(month: int) -> str:
@@ -117,12 +123,20 @@ _WEEKDAYS_KA = [
 def _gather_product_candidates(slot: str, limit: int) -> list[db.Product]:
     """Pick a candidate set the strategist will choose from.
 
-    Rules:
+    Daily slot (default since Phase 18) — demand-ranked: top sellers from the
+    last 30 days, intersected with current in-stock + not-recently-featured.
+    If sales data is too thin (cold start), falls back to the same in-stock +
+    priced + not-recently-featured pool that legacy slots use.
+
+    Legacy slots (B2B/B2C/EDU/BTS/LITE/Promo) keep the original behavior:
       - In stock (stock_qty > 0)
       - Not featured in the last 7 days (avoid repeats)
       - For Promo slot: must have a price
       - Random sample to give the strategist variety
     """
+    if slot == brand.DEFAULT_SLOT:
+        return _gather_demand_candidates(limit)
+
     with db.session_scope() as s:
         q = s.query(db.Product).filter(db.Product.stock_qty > 0)
         week_ago = datetime.utcnow() - timedelta(days=7)
@@ -137,6 +151,65 @@ def _gather_product_candidates(slot: str, limit: int) -> list[db.Product]:
     # Random shuffle + limit, so the strategist sees a fresh subset each day.
     random.shuffle(candidates)
     return candidates[:limit]
+
+
+# How many top-seller codes to fetch from the sales window. We over-fetch so
+# that after intersecting with "in stock" + "not featured recently" we still
+# end up with enough variety for the strategist.
+_DEMAND_OVERFETCH_MULTIPLIER = 3
+# Minimum number of demand-ranked candidates before we fall back to the
+# in-stock pool. Below this we treat the sales history as too thin.
+_DEMAND_MIN_VARIETY = 5
+
+
+def _gather_demand_candidates(limit: int) -> list[db.Product]:
+    """Daily-mode candidates ranked by recent sales.
+
+    1. Pull the top selling codes from the last 30 days.
+    2. Intersect with products that are currently in stock and weren't featured
+       in the last 7 days, preserving the sales ranking.
+    3. If the intersection is too small to give the strategist variety, fall
+       back to the in-stock + priced pool (random sample).
+    """
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    top_codes = db.list_top_selling_codes(
+        days=30, limit=limit * _DEMAND_OVERFETCH_MULTIPLIER
+    )
+
+    with db.session_scope() as s:
+        ranked: list[db.Product] = []
+        if top_codes:
+            rows = (
+                s.query(db.Product)
+                .filter(db.Product.code.in_(top_codes))
+                .filter(db.Product.stock_qty > 0)
+                .filter(
+                    (db.Product.last_featured_at.is_(None))
+                    | (db.Product.last_featured_at < week_ago)
+                )
+                .all()
+            )
+            by_code = {p.code: p for p in rows}
+            ranked = [by_code[c] for c in top_codes if c in by_code]
+            if len(ranked) >= _DEMAND_MIN_VARIETY:
+                return ranked[:limit]
+
+        fallback = (
+            s.query(db.Product)
+            .filter(db.Product.stock_qty > 0)
+            .filter(db.Product.price.isnot(None))
+            .filter(db.Product.price > 0)
+            .filter(
+                (db.Product.last_featured_at.is_(None))
+                | (db.Product.last_featured_at < week_ago)
+            )
+            .all()
+        )
+
+    random.shuffle(fallback)
+    # Keep any top-sellers we did get at the front, then top up with fallback.
+    seen = {p.code for p in ranked}
+    return (ranked + [p for p in fallback if p.code not in seen])[:limit]
 
 
 def _recent_topics() -> list[str]:
@@ -326,7 +399,12 @@ def validate_post(
     speak, audience mismatch, weak hook). Switched to Gemini JSON mode for
     ~10x cost reduction.
     """
-    audience = "B2B (ვულკანიზაცია/სამრეცხაო მფლობელი)" if slot == "B2B" else "B2C (DIY მძღოლი)"
+    if slot == "B2B":
+        audience = "B2B (ვულკანიზაცია/სამრეცხაო მფლობელი)"
+    elif slot == "B2C":
+        audience = "B2C (DIY მძღოლი)"
+    else:
+        audience = "შერეული — B2B + B2C ერთად (Daily სლოტი)"
     user_prompt = prompts.POST_VALIDATOR_USER_TEMPLATE.format(
         body_text=body,
         hashtags=", ".join(hashtags),
@@ -602,8 +680,8 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Generate a Facebook post draft (no publish).")
     parser.add_argument(
         "--slot",
-        choices=["B2B", "B2C", "EDU", "BTS", "LITE", "Promo"],
-        help="Force a calendar slot (default: today's).",
+        choices=["Daily", "B2B", "B2C", "EDU", "BTS", "LITE", "Promo"],
+        help="Force a slot (default: Daily — demand-ranked product).",
     )
     parser.add_argument(
         "--no-validate",

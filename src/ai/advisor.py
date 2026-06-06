@@ -2,10 +2,10 @@
 
 The advisor knows:
   - Today's date (and what season it is in Batumi — tourist start, peak summer, etc.)
-  - Day of week (B2B day, B2C day, EDU day per brandbook calendar)
+  - Day of week (informational only — Phase 18 dropped weekday-based slot rotation)
   - Current inventory state (% priced, % in-stock, % with photos)
   - Recent posting activity (last 7 days, pending drafts)
-  - Brand voice rules from brand.py
+  - Brand voice rules from brand.py (formal "თქვენ" in posts, Phase 18)
 
 It returns up to 5 short tips with icons, categories, and optional action labels.
 Tips are cached in `settings` table under key `tips:YYYY-MM-DD` so we don't burn
@@ -87,11 +87,13 @@ SYSTEM_PROMPT = f"""\
 ხედვა: {brand.VISION}
 
 სამიზნე აუდიტორია: B2B (ვულკანიზაცია/ავტოსამრეცხაო მფლობელები) + B2C (DIY მძღოლები).
-ბრენდის ხმა: პროფესიონალური, პირდაპირი, დახმარებაზე ორიენტირებული, "შენ" ფორმით.
+ბრენდის ხმა FB პოსტებში (Phase 18, 2026-06): პროფესიონალური, პირდაპირი, დახმარებაზე
+ორიენტირებული, **"თქვენ" ფორმით** (formal). თქვენი რჩევები ფასილატორთან კი
+ჩვეულებრივ "შენ" ფორმაშია — რჩევა მფლობელისთვისაა, არა მუშტრებისთვის.
 
 შენი ამოცანა — დღევანდელი თარიღისთვის მისცე ფასილატორს 4-5 პრაქტიკული, კონკრეტული რჩევა:
 - ერთი მაინც სეზონური (Batumi-ის ამინდის/ტურისტული სეზონის გათვალისწინებით)
-- ერთი მაინც კონტენტ-სტრატეგიის შესახებ (ბრენდბუქის კალენდრის მიხედვით)
+- ერთი მაინც კონტენტ-სტრატეგიის შესახებ (Daily product-spotlight ფორმატი)
 - ერთი მაინც კონკრეტული მოქმედებაზე (action item) მონაცემების საფუძველზე
 - დანარჩენი — სავაჭრო, აუდიტორიის, ან ზრდის რჩევები
 
@@ -100,7 +102,7 @@ SYSTEM_PROMPT = f"""\
 აკრძალულია:
 - ცარიელი ფრაზები ("გაიხდი მუშტრის ვარსკვლავი" ტიპის)
 - კონკურენტების ხსენება
-- "თქვენ" ფორმის გამოყენება
+- "შენ" ფორმის გამოყენება FB პოსტის ნიმუშებში (formal "თქვენ" სავალდებულოა)
 - ფასების მოგონება
 - მარკეტინგული ჟარგონი
 
@@ -128,9 +130,8 @@ USER_PROMPT_TEMPLATE = """\
 ბათუმის სეზონური კონტექსტი:
 {season_hint}
 
-ბრენდბუქის კალენდრით დღეს უნდა გავაკეთო: {calendar_slot} ფოკუსიანი პოსტი
-(B2B = ვულკანიზაცია/სამრეცხაოს მფლობელები, B2C = ენთუზიასტი, EDU = საგანმანათლებლო,
-BTS = behind the scenes, LITE = მსუბუქი, Promo = აქცია).
+დღევანდელი პოსტის ფოკუსი: {calendar_slot} (Phase 18 — ყოველ დღე product-spotlight
+მოთხოვნად პროდუქტზე, აუდიტორია შერეული B2B+B2C).
 
 მაღაზიის სტატისტიკა:
 - პროდუქცია სულ: {total_products}
@@ -239,7 +240,7 @@ class Advisor:
             "date_human": f"{today.day} {MONTHS_KA[today.month - 1]} {today.year}",
             "weekday_ka": WEEKDAYS_KA[today.weekday()],
             "season_hint": _season_hint(today.month),
-            "calendar_slot": brand.WEEKLY_CALENDAR.get(today.weekday(), "B2C"),
+            "calendar_slot": brand.DEFAULT_SLOT,
             "total_products": total,
             "priced_products": priced,
             "price_pct": round(priced / total * 100) if total else 0,

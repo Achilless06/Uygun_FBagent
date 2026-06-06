@@ -40,12 +40,12 @@ VALUES = {
         "საბურავი ისევ ეფეთქება გზაზე = ავარია."
     ),
     "პროფესიონალიზმი": (
-        "კლიენტი პროფესიონალია, ენაც პროფესიონალური უნდა იყოს — მაგრამ "
-        "'შენ' ფორმაში, კომპეტენტური შინაარსით."
+        "კლიენტი პროფესიონალია, ენაც პროფესიონალური უნდა იყოს — "
+        "'თქვენ' ფორმაში, კომპეტენტური შინაარსით."
     ),
     "ხელმისაწვდომობა": (
-        "შეკვეთა და მიწოდება მარტივი უნდა იყოს. დარეკე — გვითხარი — "
-        "გავაგზავნოთ. მიწოდება უფასოა საქართველოს მასშტაბით."
+        "შეკვეთა და მიწოდება მარტივი უნდა იყოს. დაგვირეკეთ — გვითხარით — "
+        "გავაგზავნით. მიწოდება უფასოა საქართველოს მასშტაბით."
     ),
     "გამჭვირვალობა": (
         "ფასები, ვადები, შემადგენლობა, ხელმისაწვდომობა — ღია ინფორმაცია. "
@@ -68,32 +68,30 @@ AUDIENCE_B2C = (
     "აფასებენ ნათელ ინსტრუქციას, კონსულტაციას, ფასს, მცირე მინიმუმს."
 )
 
-# ─── 4. Weekly content calendar (brandbook p. 14) ────────────────────────────
-# Day-of-week index: Monday = 0, Sunday = 6 (matches Python's datetime.weekday()).
+# ─── 4. Content slots (Phase 18, 2026-06) ────────────────────────────────────
+# Default behavior: every day = "Daily" — product-spotlight on a top-selling /
+# in-stock item. Old weekday-based rotation (B2B Mon, B2C Tue, …) was removed
+# because the founder wanted a single steady format. Legacy slots B2B/B2C/EDU/
+# BTS/LITE/Promo are retained as MANUAL overrides for `/generate B2B` etc.
 
-CalendarSlot = str  # "B2B" | "B2C" | "EDU" | "BTS" | "LITE" | "Promo"
-
-WEEKLY_CALENDAR: dict[int, CalendarSlot] = {
-    0: "B2B",    # Mon — vulcanization shops, car washes
-    1: "B2C",    # Tue — enthusiasts / DIY
-    2: "EDU",    # Wed — educational (radial vs bias, etc.)
-    3: "B2B",    # Thu — product + wholesale
-    4: "BTS",    # Fri — behind the scenes
-    5: "Promo",  # Sat — promotion / discount
-    6: "LITE",   # Sun — light / emotional
-}
+CalendarSlot = str  # "Daily" (default) | "B2B" | "B2C" | "EDU" | "BTS" | "LITE" | "Promo"
 
 SLOT_DESCRIPTIONS: dict[CalendarSlot, str] = {
+    "Daily": (
+        "მოთხოვნადი პროდუქცია — ბოლო თვის top-seller ან მარაგში არსებული. "
+        "Product Spotlight ფორმატი: სახელი + ფასი + 1 აღწერითი წინადადება. "
+        "სამიზნე აუდიტორია შერეულია (B2B + B2C)."
+    ),
     "B2B": (
-        "მიმართე ვულკანიზაცია / ავტოსამრეცხაოს მფლობელს. ფოკუსი: მარაგი, "
+        "მიმართეთ ვულკანიზაცია / ავტოსამრეცხაოს მფლობელს. ფოკუსი: მარაგი, "
         "საბითუმო ფასი, სტაბილური მიწოდება. ტონი — პრაქტიკული, ფასი/მოცულობა."
     ),
     "B2C": (
-        "მიმართე ავტოენთუზიასტს, რომელიც თვითონ აკეთებს რემონტს. ფოკუსი: "
+        "მიმართეთ ავტოენთუზიასტს, რომელიც თვითონ აკეთებს რემონტს. ფოკუსი: "
         "კონკრეტული პროდუქტი, ექსპერტული რჩევა, ხელმისაწვდომი ფასი."
     ),
     "EDU": (
-        "ასწავლე რაიმე ვულკანიზაციის / ავტოსამრეცხაოს თემაზე — Radial vs Bias, "
+        "ასწავლეთ რაიმე ვულკანიზაციის / ავტოსამრეცხაოს თემაზე — Radial vs Bias, "
         "რეზინის ცემენტის გამოყენება, სეზონური რჩევა და ა.შ. პროდუქტი მეორეხარისხოვანი."
     ),
     "BTS": (
@@ -109,6 +107,8 @@ SLOT_DESCRIPTIONS: dict[CalendarSlot, str] = {
         "products.xlsx-ში არსებული ციფრებიდან."
     ),
 }
+
+DEFAULT_SLOT: CalendarSlot = "Daily"
 
 # ─── 5. Post formats (brandbook p. 15) ───────────────────────────────────────
 # Generator rotates between these to avoid monotony.
@@ -166,14 +166,14 @@ CONTACT_BLOCK = f"📞 {CONTACT_PHONE}\n📍 {CONTACT_ADDRESS}"
 # Encoded as both a system-prompt instruction (see ai/prompts.py) and as
 # guardrail validators (see guardrails.py).
 
-# Phrases the brand uses (positive examples).
+# Phrases the brand uses (positive examples — formal "თქვენ" form).
 LOVED_PHRASES = [
     "გვაქვს მარაგში",
-    "შემოგვიარე",
-    "მოგვწერე",
-    "დაგვირეკე",
-    "გვითხარი რა გჭირდება",
-    "გავაგზავნოთ",
+    "შემოგვიარეთ",
+    "მოგვწერეთ",
+    "დაგვირეკეთ",
+    "გვითხარით რა გჭირდებათ",
+    "გავაგზავნით",
     "უფასო მიწოდება საქართველოს მასშტაბით",
 ]
 
@@ -181,26 +181,30 @@ LOVED_PHRASES = [
 # These are validated by guardrails.check_banned_phrases().
 BANNED_PHRASES = [
     "გვაქვს თქვენთვის შესანიშნავი შემოთავაზება",
-    "არ გამოტოვო ეს უნიკალური შესაძლებლობა",
-    "შეუკვეთეთ ახლავე",
+    "არ გამოტოვოთ ეს უნიკალური შესაძლებლობა",
     "ვინც ნამდვილ ხარისხს უძღვნის",
     "პატივცემულო პარტნიორებო",
     "ფანტასტიკურ შესაძლებლობას",
 ]
 
-# The brand uses "შენ" form, not "თქვენ". Generator must comply.
-# Guardrails detect common "თქვენ"-form markers.
-TKVEN_MARKERS = [
-    "თქვენ ",
-    "თქვენი ",
-    "თქვენთვის",
-    "თქვენთან",
-    "თქვენს ",
-    "შეუკვეთეთ",
-    "შემოგვიარეთ",
-    "გვითხარით",
-    "მოგვწერეთ",
-    "დაგვირეკეთ",
+# Phase 18 (2026-06): brand uses formal "თქვენ" form, not informal "შენ".
+# Guardrails detect common "შენ"-form markers (informal 2nd-person sing).
+# Matched via word-boundary regex in guardrails.check_address_form() to avoid
+# prefix false-positives (e.g. "შემოგვიარე" inside formal "შემოგვიარეთ").
+SHEN_MARKERS = [
+    "შენ",
+    "შენი",
+    "შენთვის",
+    "შენთან",
+    "შენს",
+    "შემოგვიარე",
+    "მოგვწერე",
+    "დაგვირეკე",
+    "გვითხარი",
+    "გაქვს",
+    "გჭირდება",
+    "შეგიძლია",
+    "შემოგვიერთდი",
 ]
 
 # Tire = "საბურავი" (NOT "სალტე" — explicitly forbidden, brandbook p. 11).

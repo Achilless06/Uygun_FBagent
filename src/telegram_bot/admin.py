@@ -551,7 +551,7 @@ async def handle_test_fb(message: Message) -> None:
 
 # ─── Post Generation ─────────────────────────────────────────────────────────
 
-VALID_SLOTS = {"B2B", "B2C", "EDU", "BTS", "LITE", "Promo"}
+VALID_SLOTS = {"Daily", "B2B", "B2C", "EDU", "BTS", "LITE", "Promo"}
 
 
 async def _run_generate_and_preview(

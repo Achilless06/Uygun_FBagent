@@ -20,7 +20,7 @@ Coverage maps to brandbook §11 (page 20):
   7. ❌ Autonomous publish  →  (enforced by the approval flow, not here)
 
 Plus brandbook §4 voice rules:
-  - ✅ "შენ" form only       → check_address_form()
+  - ✅ "თქვენ" form only (Phase 18) → check_address_form()
   - ✅ No banned phrases     → check_banned_phrases()
   - ✅ "საბურავი" not "სალტე" → check_tire_word()
   - ✅ Hashtag count 2-3     → check_hashtags()
@@ -63,18 +63,28 @@ class Draft:
 # ─── Individual checks ───────────────────────────────────────────────────────
 
 
+_SHEN_PATTERNS = tuple(
+    re.compile(rf"\b{re.escape(m)}\b") for m in brand.SHEN_MARKERS
+)
+
+
 def check_address_form(draft: Draft) -> list[Violation]:
-    """Reject "თქვენ"-form markers — brandbook p. 11 requires "შენ" form."""
+    """Reject informal "შენ"-form markers — Phase 18 requires formal "თქვენ".
+
+    Word-boundary regex avoids false positives where a "შენ" marker is the
+    prefix of its "თქვენ" counterpart (e.g. "შემოგვიარე" inside "შემოგვიარეთ").
+    """
     out: list[Violation] = []
     text = draft.body_text
-    for marker in brand.TKVEN_MARKERS:
-        if marker in text:
+    for pattern in _SHEN_PATTERNS:
+        match = pattern.search(text)
+        if match:
             out.append(
                 Violation(
                     rule="address_form",
                     severity=Severity.BLOCK,
-                    detail=f"'თქვენ' ფორმის გამოყენება ('{marker.strip()}') — გამოიყენე 'შენ'.",
-                    matched_text=marker.strip(),
+                    detail=f"'შენ' ფორმის გამოყენება ('{match.group(0)}') — გამოიყენეთ 'თქვენ'.",
+                    matched_text=match.group(0),
                 )
             )
     return out

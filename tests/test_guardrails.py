@@ -27,21 +27,28 @@ def _draft(body: str, **kwargs) -> Draft:
 
 
 class TestAddressForm:
-    def test_shen_form_passes(self):
-        d = _draft("გვითხარი რა გჭირდება, გავაგზავნით უფასოდ.")
+    def test_tkven_form_passes(self):
+        # Phase 18 (2026-06): brand voice flipped to formal "თქვენ" form.
+        d = _draft("გვითხარით რა გჭირდებათ, გავაგზავნით უფასოდ.")
         assert guardrails.check_address_form(d) == []
 
-    def test_tkven_form_blocks(self):
-        d = _draft("გვითხარით რა გჭირდებათ, გავაგზავნით.")
+    def test_shen_form_blocks(self):
+        d = _draft("გვითხარი რა გჭირდება, გავაგზავნით.")
         violations = guardrails.check_address_form(d)
         assert len(violations) >= 1
         assert all(v.severity is Severity.BLOCK for v in violations)
         assert violations[0].rule == "address_form"
 
-    def test_tkven_possessive_blocks(self):
-        d = _draft("თქვენი ვულკანიზაცია გვჭირდება.")
+    def test_shen_possessive_blocks(self):
+        d = _draft("შენი ვულკანიზაცია გვჭირდება.")
         violations = guardrails.check_address_form(d)
         assert len(violations) >= 1
+
+    def test_formal_imperative_not_false_positive(self):
+        # The informal "შემოგვიარე" is a prefix of the formal "შემოგვიარეთ" —
+        # word-boundary regex must NOT flag the formal version.
+        d = _draft("შემოგვიარეთ მაღაზიაში.")
+        assert guardrails.check_address_form(d) == []
 
 
 # ─── banned phrases ──────────────────────────────────────────────────────────
@@ -49,11 +56,11 @@ class TestAddressForm:
 
 class TestBannedPhrases:
     def test_clean_text_passes(self):
-        d = _draft("გვაქვს ცემენტი მარაგში, შემოგვიარე.")
+        d = _draft("გვაქვს ცემენტი მარაგში, შემოგვიარეთ.")
         assert guardrails.check_banned_phrases(d) == []
 
     def test_marketing_phrase_blocks(self):
-        d = _draft("არ გამოტოვო ეს უნიკალური შესაძლებლობა!")
+        d = _draft("არ გამოტოვოთ ეს უნიკალური შესაძლებლობა!")
         violations = guardrails.check_banned_phrases(d)
         assert len(violations) >= 1
         assert violations[0].rule == "banned_phrase"
@@ -191,11 +198,11 @@ class TestHashtags:
 
 class TestContactBlock:
     def test_phone_present_passes(self):
-        d = _draft(f"გვითხარი რა გჭირდება. {brand.CONTACT_PHONE}")
+        d = _draft(f"გვითხარით რა გჭირდებათ. {brand.CONTACT_PHONE}")
         assert guardrails.check_contact_block(d) == []
 
     def test_address_present_passes(self):
-        d = _draft(f"შემოგვიარე — {brand.CONTACT_ADDRESS}")
+        d = _draft(f"შემოგვიარეთ — {brand.CONTACT_ADDRESS}")
         assert guardrails.check_contact_block(d) == []
 
     def test_neither_warns(self):
@@ -210,11 +217,11 @@ class TestContactBlock:
 
 class TestPlaceholders:
     def test_no_placeholder_passes(self):
-        d = _draft("ცემენტი 20 ლარი. დაგვირეკე.")
+        d = _draft("ცემენტი 20 ლარი. დაგვირეკეთ.")
         assert guardrails.check_placeholders(d) == []
 
     def test_bracket_placeholder_blocks(self):
-        d = _draft("დაგვირეკე [ტელეფონის ნომერი]")
+        d = _draft("დაგვირეკეთ [ტელეფონის ნომერი]")
         violations = guardrails.check_placeholders(d)
         assert len(violations) == 1
         assert violations[0].rule == "placeholder"
@@ -241,9 +248,9 @@ class TestValidate:
         assert not guardrails.has_blocking_violations(violations)
 
     def test_multiple_violations_collected(self):
-        # 'თქვენ' form + invented price + 'სალტე'.
+        # 'შენ' form + invented price + 'სალტე' (Phase 18 inverted address form).
         d = _draft(
-            "თქვენ გვინდა გავაგზავნოთ სალტე 999 ლარად",
+            "შენ გვინდა გავაგზავნოთ სალტე 999 ლარად",
             featured_product_price=20.0,
         )
         violations = guardrails.validate(d)
