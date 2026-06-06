@@ -82,6 +82,11 @@ class Config:
     admin_password: str
     public_base_url: str
 
+    # Airtable (Monthly Top Sellers — /import_sales handler)
+    airtable_token: str
+    airtable_base_id: str
+    airtable_monthly_table_id: str
+
     # Runtime
     dry_run: bool
     timezone: str
@@ -126,6 +131,13 @@ def load() -> Config:
         admin_username=_optional("ADMIN_USERNAME", "admin"),
         admin_password=_optional("ADMIN_PASSWORD", "change-me"),
         public_base_url=_optional("PUBLIC_BASE_URL", "http://localhost:8000"),
+        # Airtable PAT — empty until founder generates one. /import_sales
+        # raises a clear setup-instruction error when missing.
+        airtable_token=_optional("AIRTABLE_TOKEN", ""),
+        airtable_base_id=_optional("AIRTABLE_BASE_ID", "appWU0o0Xxz44L6Xo"),
+        airtable_monthly_table_id=_optional(
+            "AIRTABLE_MONTHLY_TABLE_ID", "tblptYd9f06LUdRMp"
+        ),
         dry_run=_bool("DRY_RUN", True),
         timezone=_optional("TIMEZONE", "Asia/Tbilisi"),
         monthly_budget_usd=float(_optional("MONTHLY_BUDGET_USD", "20")),

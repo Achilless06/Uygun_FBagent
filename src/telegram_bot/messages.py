@@ -50,7 +50,8 @@ HELP = (
     "/sale `კოდი რაოდენობა ფასი` — გაყიდვის ჩაწერა\n"
     "/sales — ბოლო გაყიდვები\n"
     "/sales\\_summary — დღევანდელი + თვის ანალიზი\n"
-    "/undo\\_sale `id` — გაყიდვის წაშლა\n\n"
+    "/undo\\_sale `id` — გაყიდვის წაშლა\n"
+    "/import\\_sales — თვის ZIP-ის იმპორტი → Airtable Top-15\n\n"
     "*🧠 მახსოვრობა*\n"
     "/remember `ტექსტი` — შენი preference-ის შენახვა\n"
     "/memories — შენახული მახსოვრობა\n"
@@ -410,6 +411,69 @@ BUDGET_BLOCK_100 = (
     "გასაგრძელებლად:\n"
     "1. გაზარდე ბიუჯეტი: /set\\_budget `25`\n"
     "2. ან აქტიური გახადე: /set\\_active `true`"
+)
+
+# ─── Sales import (/import_sales — monthly Airtable workflow) ────────────────
+
+IMPORT_SALES_PROMPT = (
+    f"{DIVIDER}\n"
+    "📥 *თვის გაყიდვების იმპორტი*\n"
+    f"{DIVIDER}\n\n"
+    "გამომიგზავნე *ერთი ZIP ფაილი* — შეფუთული თვის ფოლდერი "
+    "(მაგ. `ივნისი 06 2026.zip`).\n\n"
+    "*როგორ:* Finder-ში → marc-დაკიდე ფოლდერი → Right-click → *Compress*. "
+    "მიღებული `.zip` დააგდე ჩატში.\n\n"
+    "📊 მე გავაანალიზებ ფაილებს, გაჩვენებ Top-15 ბესტსელერებს და "
+    "შევანახავ Airtable-ში.\n\n"
+    "_გასაუქმებლად: /cancel_"
+)
+IMPORT_SALES_NEED_ZIP = (
+    "📥 ZIP ფაილი მინდა (.zip). გადააფუთე თვის ფოლდერი — Finder → "
+    "Right-click → Compress.\n\n_გასაუქმებლად: /cancel_"
+)
+IMPORT_SALES_DOWNLOADING = "⬇️ _ფაილს გადმოვწერ…_"
+IMPORT_SALES_DOWNLOAD_FAILED = "❌ გადმოწერა ვერ მოხერხდა.\n\n`{error}`"
+IMPORT_SALES_PARSING = "🔍 _ფაილს ვშლი და ვაანალიზებ…_"
+IMPORT_SALES_NO_DATA = (
+    "⚠️ ZIP-ში გაყიდვის row არ ვიპოვე.\n\n"
+    "შემოწმდი:\n"
+    "• `.xlsx` ფაილებია შიგნით\n"
+    "• Sales ან satis sheet-ი არსებობს\n"
+    "• C2 უჯრაში თარიღია (DD/MM/YYYY)"
+)
+IMPORT_SALES_MIXED_MONTHS = (
+    "⚠️ ZIP შეიცავს {count} თვის ფაილს. Top-15-ისთვის ვიყენებ "
+    "ყველაზე ცხრიან თვეს: *{dominant}*. დანარჩენი row-ები მაინც "
+    "ჩაიწერება DB-ში.\n\n"
+)
+IMPORT_SALES_PREVIEW = (
+    f"{DIVIDER}\n"
+    "📊 *Preview — {period}*\n"
+    f"{DIVIDER}\n\n"
+    "{warning}"
+    "📂 ფაილი: `{files}`\n"
+    "🧾 row: `{rows}`\n"
+    "💰 ჯამი: *{revenue:,.2f}* ₾\n"
+    "🏷 უნიკალური კოდი: `{unique}`\n"
+    "📅 {date_range}\n"
+    "{unknown}\n\n"
+    "ჩავწერო DB-ში + Airtable Top-15-ში?"
+)
+IMPORT_BTN_CONFIRM = "✅ დადასტურება"
+IMPORT_BTN_CANCEL = "❌ გაუქმება"
+IMPORT_SALES_CANCELLED = "❌ იმპორტი გაუქმდა."
+IMPORT_SALES_WORKING = "⚙️ _ვწერ DB-ში + Airtable-ში…_"
+IMPORT_SALES_COMMIT_FAILED = "❌ იმპორტი ჩავარდა.\n\n`{error}`"
+IMPORT_SALES_DONE = (
+    f"{DIVIDER}\n"
+    "✅ *იმპორტი დასრულდა — {period}*\n"
+    f"{DIVIDER}\n\n"
+    "💾 DB: `{inserted}` row ჩაიწერა (`{deleted}` ძველი წაიშალა)\n"
+    "{airtable_status}\n"
+    "{airtable_url}\n\n"
+    "🏆 *Top-5:*\n"
+    "{top_summary}\n\n"
+    "_სრული Top-15: Airtable-ში → Monthly Top Sellers → Period={period}_"
 )
 
 # ─── Inventory low-stock alert ───────────────────────────────────────────────

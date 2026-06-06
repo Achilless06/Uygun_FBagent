@@ -26,7 +26,7 @@ from src import config, db
 from src import scheduler as scheduler_module
 from src.logging_setup import configure as configure_logging
 from src.logging_setup import get_logger
-from src.telegram_bot import admin, approval, chat, messages
+from src.telegram_bot import admin, approval, chat, import_sales, messages
 
 log = get_logger(__name__)
 
@@ -117,6 +117,9 @@ def build_dispatcher(admin_chat_id: int) -> Dispatcher:
     dp.update.outer_middleware(AdminOnlyMiddleware(admin_chat_id))
     dp.include_router(admin.router)
     dp.include_router(approval.router)
+    # import_sales BEFORE chat so its FSM message handlers (waiting_for_zip,
+    # confirming) win over the catch-all chat handler when active.
+    dp.include_router(import_sales.router)
     dp.include_router(chat.router)
     return dp
 
