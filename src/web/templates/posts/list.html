@@ -17,7 +17,7 @@
         <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">{{ t.POSTS_PAGE_EYEBROW }}</span>
       </div>
       <div class="flex items-end justify-between gap-4">
-        <h1 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight">{{ t.POSTS_PAGE_TITLE }}</h1>
+        <h1 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight" data-split>{{ t.POSTS_PAGE_TITLE }}</h1>
         {% if total is defined %}
           <span class="text-sm text-uygun-grey shrink-0">{{ t.POSTS_TOTAL_LABEL }} <span data-counter>{{ total }}</span></span>
         {% endif %}

@@ -16,7 +16,7 @@
    that targets every `.lang-switcher`. Each instance gets a unique
    trigger ID so aria-controls works for screen readers.                 #}
 {% macro lang_switcher(variant="dark-nav", size="md", direction="down") %}
-  {% set sz = {"sm": "w-7 h-7 text-sm", "md": "w-8 h-8 text-base", "lg": "w-9 h-9 text-lg"}[size] %}
+  {% set sz = {"sm": "w-9 h-9 text-sm", "md": "w-10 h-10 sm:w-9 sm:h-9 text-base", "lg": "w-11 h-11 text-lg"}[size] %}
   {% set current = langs | selectattr("code", "equalto", lang) | first %}
   {% set others = langs | rejectattr("code", "equalto", lang) | list %}
   {% set uid = range(100000, 999999) | random %}
@@ -29,8 +29,9 @@
             aria-label="{{ t.NAV_MENU_LABEL }}: {{ current.name }}"
             title="{{ current.name }}"
             class="lang-trigger {{ sz }} rounded-full flex items-center justify-center
-                   ring-1 ring-uygun-red bg-white/5 hover:bg-white/10
-                   transition-all duration-200">
+                   ring-1 ring-uygun-red bg-black/[0.04] hover:bg-black/[0.08]
+                   dark:bg-white/5 dark:hover:bg-white/10
+                   transition-all duration-300 ease-smooth">
       {{ current.flag }}
     </button>
     <div id="lang-menu-{{ uid }}"
@@ -39,14 +40,17 @@
          class="lang-menu absolute
                 {% if direction == 'up' %}bottom-full mb-2 left-0 origin-bottom-left{% else %}top-full mt-2 right-0 origin-top-right{% endif %}
                 z-50 min-w-[140px] py-1
-                bg-uygun-black/95 backdrop-blur-md border border-white/10
+                bg-white/95 dark:bg-uygun-black/95 backdrop-blur-md
+                border border-black/[0.08] dark:border-white/10
                 rounded-lg shadow-hover">
       {% for L in others %}
         <button type="button"
                 role="menuitem"
                 onclick="setLang('{{ L.code }}')"
-                class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white
-                       hover:bg-white/10 transition-colors duration-150 text-left">
+                class="w-full flex items-center gap-2.5 px-3 py-2 text-sm
+                       text-uygun-black/75 hover:text-uygun-black hover:bg-black/[0.05]
+                       dark:text-white/75 dark:hover:text-white dark:hover:bg-white/10
+                       transition-colors duration-150 text-left">
           <span class="text-base" aria-hidden="true">{{ L.flag }}</span>
           <span>{{ L.name }}</span>
         </button>
@@ -60,7 +64,7 @@
 {# variant: "dark-nav" (white icons on dark bg) | "footer" (same)  #}
 {# size: "sm" (w-7) | "md" (w-8) | "lg" (w-9)                      #}
 {% macro theme_toggle(variant="dark-nav", size="md") %}
-  {% set sz = {"sm": "w-7 h-7 text-sm", "md": "w-8 h-8 text-base", "lg": "w-9 h-9 text-lg"}[size] %}
+  {% set sz = {"sm": "w-9 h-9 text-sm", "md": "w-10 h-10 sm:w-9 sm:h-9 text-base", "lg": "w-11 h-11 text-lg"}[size] %}
   {# aria-label is updated client-side by toggleTheme() to reflect the
      action the next click will perform. Initial value reflects light-mode
      default; the pre-paint script syncs it before first interaction. #}
@@ -71,9 +75,10 @@
           title="{{ t.THEME_DARK_LABEL }} / {{ t.THEME_LIGHT_LABEL }}"
           aria-label="{{ t.THEME_DARK_LABEL }}"
           class="{{ sz }} rounded-full flex items-center justify-center
-                 text-white/60 hover:text-white opacity-60 hover:opacity-100
-                 hover:bg-white/10 hover:scale-110
-                 transition-all duration-200">
+                 text-uygun-black/60 hover:text-uygun-black hover:bg-black/[0.06]
+                 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/10
+                 opacity-70 hover:opacity-100 hover:scale-110
+                 transition-all duration-300 ease-smooth">
     {# Moon (visible in light mode → click to go dark) #}
     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="w-4 h-4 block dark:hidden">
       <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
@@ -103,7 +108,7 @@
       <img src="/assets/uploaded/{{ p.code | urlencode }}.jpg?v={{ p.updated_at | int_ts }}"
            alt="{{ p.name }}"
            width="400" height="176" loading="lazy" decoding="async"
-           class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-smooth" />
+           class="w-full h-full object-contain p-3 group-hover:scale-[1.04] transition-transform duration-700 ease-smooth" />
     {% else %}
       {# Geometric background accent — purely decorative #}
       <div class="absolute -right-4 -top-4 w-24 h-24 rounded-full border border-black/[0.05]

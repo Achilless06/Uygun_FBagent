@@ -39,6 +39,7 @@ from datetime import datetime  # noqa: E402
 from src import brand as _brand  # noqa: E402
 
 templates.env.globals["brand"] = _brand
+templates.env.globals["now"] = datetime.now  # fresh value on every render → live year
 
 
 def _int_ts(value) -> int:

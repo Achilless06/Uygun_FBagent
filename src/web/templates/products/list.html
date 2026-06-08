@@ -16,7 +16,7 @@
         <span class="w-1.5 h-1.5 rounded-full bg-uygun-red animate-pulse"></span>
         <span class="text-xs font-semibold uppercase tracking-widest text-uygun-grey">{{ t.PRODUCTS_PAGE_EYEBROW }}</span>
       </div>
-      <h1 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight">{{ t.PRODUCTS_PAGE_TITLE }}</h1>
+      <h1 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight" data-split>{{ t.PRODUCTS_PAGE_TITLE }}</h1>
       {% if total is defined %}
         <p class="mt-1 text-sm text-uygun-grey">
           {% if search %}„{{ search }}" — {% endif %}
@@ -43,7 +43,7 @@
           <input type="search" id="products-search" name="q" value="{{ search }}"
                  placeholder="{{ t.PRODUCTS_SEARCH_PLACEHOLDER }}"
                  autocomplete="off"
-                 class="w-full pl-9 pr-4 py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
+                 class="w-full pl-9 pr-4 py-3 sm:py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
                         focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red
                         transition-all duration-200 placeholder:text-uygun-grey/60" />
         </div>
@@ -51,7 +51,7 @@
         {# Category select — labelled #}
         <label for="products-category" class="sr-only">{{ t.CATEGORY_LABEL }}</label>
         <select name="category" id="products-category"
-                class="px-3 py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
+                class="px-3 py-3 sm:py-2 text-base sm:text-sm border border-black/[0.1] rounded-lg bg-white
                        focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red
                        transition-all duration-200 text-uygun-black">
           <option value="">{{ t.PRODUCTS_ALL_CATEGORIES }}</option>
@@ -61,7 +61,7 @@
         </select>
 
         <button type="submit"
-                class="px-5 py-2 rounded-lg bg-uygun-black text-white text-sm font-medium
+                class="px-5 py-3 sm:py-2 rounded-lg bg-uygun-black text-white text-sm font-medium
                        dark:bg-white dark:text-uygun-black
                        hover:bg-uygun-red dark:hover:bg-uygun-red dark:hover:text-white
                        transition-colors duration-200 shrink-0">
@@ -95,7 +95,7 @@
       <nav class="mt-12 flex items-center justify-center gap-1" aria-label="{{ t.PAGINATION_ARIA }}" data-reveal>
         {% if page > 1 %}
           <a href="?q={{ search }}&category={{ category or '' }}&page={{ page - 1 }}"
-             class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08]
+             class="inline-flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-lg border border-black/[0.08]
                     text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" class="w-4 h-4">
               <path d="M10 4L6 8l4 4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -105,12 +105,12 @@
 
         {% for pg in range(1, total_pages + 1) %}
           {% if pg == page %}
-            <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-uygun-black text-white dark:bg-white dark:text-uygun-black text-sm font-medium">
+            <span class="inline-flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-uygun-black text-white dark:bg-white dark:text-uygun-black text-sm font-medium">
               {{ pg }}
             </span>
           {% elif pg == 1 or pg == total_pages or (pg >= page - 2 and pg <= page + 2) %}
             <a href="?q={{ search }}&category={{ category or '' }}&page={{ pg }}"
-               class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08]
+               class="inline-flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-lg border border-black/[0.08]
                       text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">
               {{ pg }}
             </a>
@@ -121,7 +121,7 @@
 
         {% if page < total_pages %}
           <a href="?q={{ search }}&category={{ category or '' }}&page={{ page + 1 }}"
-             class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-black/[0.08]
+             class="inline-flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-lg border border-black/[0.08]
                     text-uygun-black hover:bg-uygun-light text-sm transition-colors duration-200">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" class="w-4 h-4">
               <path d="M6 4l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>

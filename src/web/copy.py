@@ -12,9 +12,9 @@ the i18n package directly.
 from __future__ import annotations
 
 HERO_EYEBROW = "ავტოქიმია და ვულკანიზაციის მასალები"
-HERO_HEADING_1 = "გამძლეობა"
+HERO_HEADING_1 = "ხარისხი"
 HERO_HEADING_2 = "სანდოობა"
-HERO_SUBTITLE = """ჩვენს საწყობშია 480+ პროდუქცია სწრაფი მუშაობისთვის. უფასო მიწოდება მთელ საქართველოში გიშველის დროის დაკარგვისგან."""
+HERO_SUBTITLE = """ჩვენს საწყობშია 480+ დასახელების პროდუქტი. უფასო მიწოდება მთელ საქართველოში."""
 CTA_PRIMARY = "კატალოგი"
 CTA_SECONDARY = "დაგვირეკეთ"
 VALUES_EYEBROW = "რატომ ჩვენ"

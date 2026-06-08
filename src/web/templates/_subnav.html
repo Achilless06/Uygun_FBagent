@@ -11,8 +11,15 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
 
-      <a href="/" class="flex items-center gap-3 group">
-        <img src="/assets/brand/logo.png" alt="Uygun Georgia"
+      <a href="/" class="flex items-center gap-2 sm:gap-3 group py-2 -my-2" aria-label="{{ t.NAV_HOME }}">
+        {# Back-chevron prefix — mobile only. Gives an explicit back-to-home
+           affordance for users who otherwise have to open the hamburger. #}
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
+             aria-hidden="true"
+             class="md:hidden w-4 h-4 text-white/60 group-hover:text-white -ml-1 transition-colors duration-200">
+          <path d="M10 3l-5 5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <img src="/static/brand/logo.png" alt="Uygun Georgia"
              width="32" height="32" decoding="async" fetchpriority="high"
              class="h-8 w-8 rounded-full object-cover ring-1 ring-white/20 group-hover:ring-white/40 transition-all duration-200" />
         <span class="text-white font-semibold text-sm tracking-tight hidden sm:block">Uygun Georgia</span>
@@ -44,7 +51,7 @@
 
       {# Mobile hamburger (sub-page variant) #}
       <button id="hamburger-btn" type="button" aria-label="{{ t.NAV_MENU_LABEL }}" aria-expanded="false" aria-controls="mobile-menu"
-              class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-md hover:bg-white/10 transition-colors duration-200">
+              class="md:hidden flex flex-col justify-center items-center w-11 h-11 -mr-2 gap-1.5 rounded-md hover:bg-white/10 transition-colors duration-200">
         <span class="hamburger-line w-5 h-px bg-white transition-all duration-300 origin-center"></span>
         <span class="hamburger-line w-5 h-px bg-white transition-all duration-300"></span>
         <span class="hamburger-line w-5 h-px bg-white transition-all duration-300 origin-center"></span>

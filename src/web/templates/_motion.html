@@ -13,19 +13,125 @@
 ──────────────────────────────────────────────────────────────────── #}
 
 <style>
-  /* Reveal initial + final state */
+  /* ── Smooth scroll for in-page anchors ─────────────────────────── */
+  html { scroll-behavior: smooth; }
+
+  /* ── Reveal initial + final state (direction variants) ─────────── */
   [data-reveal] {
     opacity: 0;
     transform: translateY(20px);
     transition:
-      opacity   0.6s cubic-bezier(0.22, 0.61, 0.36, 1),
-      transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+      opacity   0.7s cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1),
+      filter    0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
     transition-delay: var(--reveal-delay, 0ms);
     will-change: opacity, transform;
   }
+  [data-reveal][data-reveal-from="up"]    { transform: translateY(28px); }
+  [data-reveal][data-reveal-from="down"]  { transform: translateY(-28px); }
+  [data-reveal][data-reveal-from="left"]  { transform: translateX(-32px); }
+  [data-reveal][data-reveal-from="right"] { transform: translateX(32px); }
+  [data-reveal][data-reveal-from="scale"] { transform: scale(0.92); }
+  [data-reveal][data-reveal-from="blur"]  { filter: blur(8px); transform: translateY(12px); }
   [data-reveal].is-revealed {
     opacity: 1;
     transform: none;
+    filter: none;
+  }
+
+  /* ── Word-split reveal ───────────────────────────────────────────
+     Applied programmatically to [data-split]. Each word is wrapped
+     in a span and stagger-revealed from below.                       */
+  [data-split] .word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.6em);
+    transition:
+      opacity   0.65s cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition-delay: var(--word-delay, 0ms);
+    will-change: opacity, transform;
+  }
+  [data-split].is-revealed .word {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ── Magnetic CTA — moves slightly toward the cursor when near ── */
+  .magnetic {
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+  }
+
+  /* ── Scroll-linked floating decorations ─────────────────────────
+     Apply `data-float` to any decorative element; it drifts a few
+     percent of scroll on Y axis. Speed via data-float-speed (default 0.05). */
+  [data-float] { will-change: transform; }
+
+  /* ── Animated underline for nav links ───────────────────────────
+     Adds a thin red bar that slides in left → right on hover/active. */
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 12px; right: 12px; bottom: 4px;
+    height: 1.5px;
+    background: linear-gradient(90deg, #BC1215, #ff6b6e);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    pointer-events: none;
+  }
+  .nav-link:hover::after,
+  .nav-link.is-active::after {
+    transform: scaleX(1);
+  }
+
+  /* ── Card image: gentle zoom on hover (use on product images) ── */
+  .img-zoom-host { overflow: hidden; }
+  .img-zoom-host img {
+    transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+  }
+  .img-zoom-host:hover img,
+  .group:hover .img-zoom-host img {
+    transform: scale(1.05);
+  }
+
+  /* ── Scroll-linked rotation for decorative rings ──────────────── */
+  [data-scroll-spin] {
+    will-change: transform;
+    transition: transform 0.15s linear;
+  }
+
+  /* ── Ambient floating shapes (decorative orbs) ────────────────── */
+  @keyframes orbDrift {
+    0%   { transform: translate3d(0, 0, 0); }
+    50%  { transform: translate3d(20px, -30px, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+  .orb-drift {
+    animation: orbDrift var(--orb-duration, 12s) ease-in-out
+               var(--orb-delay, 0s) infinite;
+  }
+
+  /* ── Section divider line that draws across on enter ──────────── */
+  [data-line-draw] {
+    position: relative;
+  }
+  [data-line-draw]::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -8px;
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(90deg, #BC1215, transparent);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 1s cubic-bezier(0.22, 0.61, 0.36, 1) 0.2s;
+  }
+  [data-line-draw].is-revealed::after {
+    transform: scaleX(1);
   }
 
   /* Ambient hero background grid: slow drift */
@@ -79,19 +185,26 @@
 
   /* Reduced motion: kill every keyframe and reveal transform. */
   @media (prefers-reduced-motion: reduce) {
-    [data-reveal] {
+    [data-reveal],
+    [data-split] .word {
       opacity: 1 !important;
       transform: none !important;
+      filter: none !important;
       transition: none !important;
     }
     .grid-drift,
     .radial-pulse,
     .cue-pulse,
     .ring-drift,
+    .orb-drift,
     .animate-bounce,
-    .animate-pulse {
+    .animate-pulse,
+    .scroll-cue-drip {
       animation: none !important;
     }
+    .magnetic { transform: none !important; }
+    [data-line-draw]::after { transform: scaleX(1) !important; }
+    .nav-link::after { transition: none !important; }
     html { scroll-behavior: auto !important; }
   }
 </style>
@@ -139,7 +252,7 @@
     }
 
     function init() {
-      var targets = document.querySelectorAll('[data-reveal]');
+      var targets = document.querySelectorAll('[data-reveal], [data-split]');
       if (!targets.length) return;
 
       // Apply per-element transition-delay from data-reveal-delay (ms).
@@ -150,6 +263,9 @@
 
       if (reduce || !('IntersectionObserver' in window)) {
         revealAll();
+        document.querySelectorAll('[data-split]').forEach(function (el) {
+          el.classList.add('is-revealed');
+        });
         return;
       }
 
@@ -287,13 +403,126 @@
       });
     }
 
+    // Split-text — wraps each word of [data-split] in <span class="word">
+    // with a staggered --word-delay so words reveal one after another.
+    function initSplitText() {
+      var step = 60; // ms between words
+      document.querySelectorAll('[data-split]').forEach(function (el) {
+        if (el.dataset.splitDone === '1') return;
+        var raw = el.textContent;
+        if (!raw || !raw.trim()) return;
+        var words = raw.trim().split(/\s+/);
+        el.textContent = '';
+        words.forEach(function (w, i) {
+          var span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = w;
+          span.style.setProperty('--word-delay', (i * step) + 'ms');
+          el.appendChild(span);
+          if (i < words.length - 1) {
+            el.appendChild(document.createTextNode(' '));
+          }
+        });
+        el.dataset.splitDone = '1';
+      });
+    }
+
+    // Magnetic buttons — when cursor is within `radius` of .magnetic
+    // element, gently pull the element toward the pointer. Skipped on
+    // touch-only devices and under reduced-motion.
+    function initMagnetic() {
+      if (reduce) return;
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+      var STRENGTH = 0.25; // how much of the offset to apply (0..1)
+      var RADIUS = 90;     // px — distance from center to start pulling
+      var nodes = document.querySelectorAll('.magnetic');
+      if (!nodes.length) return;
+      nodes.forEach(function (el) {
+        var pending = false, tx = 0, ty = 0;
+        function reset() {
+          tx = 0; ty = 0;
+          el.style.transform = '';
+        }
+        function onMove(e) {
+          var r = el.getBoundingClientRect();
+          var cx = r.left + r.width / 2;
+          var cy = r.top + r.height / 2;
+          var dx = e.clientX - cx;
+          var dy = e.clientY - cy;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > RADIUS) { reset(); return; }
+          tx = dx * STRENGTH;
+          ty = dy * STRENGTH;
+          if (!pending) {
+            pending = true;
+            requestAnimationFrame(function () {
+              el.style.transform =
+                'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0)';
+              pending = false;
+            });
+          }
+        }
+        window.addEventListener('pointermove', onMove, { passive: true });
+        el.addEventListener('pointerleave', reset);
+      });
+    }
+
+    // Scroll-linked float — translates [data-float] elements vertically
+    // by a fraction of scrollY. Speed via data-float-speed (default 0.06).
+    function initScrollFloat() {
+      if (reduce) return;
+      var nodes = document.querySelectorAll('[data-float]');
+      if (!nodes.length) return;
+      var pending = false;
+      function tick() {
+        var y = window.scrollY;
+        nodes.forEach(function (el) {
+          var s = parseFloat(el.dataset.floatSpeed || '0.06');
+          var dir = el.dataset.floatDir === 'down' ? 1 : -1;
+          var offset = y * s * dir;
+          el.style.transform = 'translate3d(0,' + offset.toFixed(2) + 'px,0)';
+        });
+        pending = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!pending) { pending = true; requestAnimationFrame(tick); }
+      }, { passive: true });
+      tick();
+    }
+
+    // Scroll-linked spin — rotates [data-scroll-spin] elements based on
+    // scrollY * speed (degrees per 100px scrolled). Default 6 deg/100px.
+    function initScrollSpin() {
+      if (reduce) return;
+      var nodes = document.querySelectorAll('[data-scroll-spin]');
+      if (!nodes.length) return;
+      var pending = false;
+      function tick() {
+        var y = window.scrollY;
+        nodes.forEach(function (el) {
+          var s = parseFloat(el.dataset.scrollSpinSpeed || '6');
+          var deg = (y / 100) * s;
+          el.style.transform = 'rotate(' + deg.toFixed(2) + 'deg)';
+        });
+        pending = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!pending) { pending = true; requestAnimationFrame(tick); }
+      }, { passive: true });
+      tick();
+    }
+
     function bootAll() {
+      initSplitText();
       init();
       initSpotlight();
       initTilt();
       initParallax();
       initScrollProgress();
       initActiveNav();
+      initMagnetic();
+      initScrollFloat();
+      initScrollSpin();
     }
 
     if (document.readyState === 'loading') {

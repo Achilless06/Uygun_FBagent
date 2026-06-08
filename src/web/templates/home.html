@@ -21,28 +21,28 @@
           {{ t.STATS_EYEBROW }}
         </span>
       </div>
-      <div class="grid grid-cols-3 gap-6 sm:gap-10">
-        <div data-reveal data-reveal-delay="100">
-          <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-uygun-black tracking-tighter mono leading-none">
+      <div class="grid grid-cols-3 gap-3 sm:gap-10">
+        <div data-reveal data-reveal-from="up" data-reveal-delay="100">
+          <div class="text-[2rem] sm:text-5xl lg:text-6xl font-bold text-uygun-black tracking-tighter mono leading-none">
             <span data-counter>{{ stats.products }}</span><span class="text-uygun-red">+</span>
           </div>
-          <p class="mt-3 text-xs sm:text-sm text-uygun-grey uppercase tracking-wider">
+          <p class="mt-2 sm:mt-3 text-[10px] sm:text-sm text-uygun-grey uppercase tracking-wider leading-tight">
             {{ t.STATS_PRODUCTS_LABEL }}
           </p>
         </div>
-        <div data-reveal data-reveal-delay="200">
-          <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-uygun-black tracking-tighter mono leading-none">
+        <div data-reveal data-reveal-from="scale" data-reveal-delay="220">
+          <div class="text-[2rem] sm:text-5xl lg:text-6xl font-bold text-uygun-black tracking-tighter mono leading-none">
             <span data-counter>6</span><span class="text-uygun-red">/7</span>
           </div>
-          <p class="mt-3 text-xs sm:text-sm text-uygun-grey uppercase tracking-wider">
+          <p class="mt-2 sm:mt-3 text-[10px] sm:text-sm text-uygun-grey uppercase tracking-wider leading-tight">
             {{ t.STATS_DAYS_LABEL }}
           </p>
         </div>
-        <div data-reveal data-reveal-delay="300">
-          <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-uygun-black tracking-tighter leading-none">
+        <div data-reveal data-reveal-from="up" data-reveal-delay="340">
+          <div class="text-[2rem] sm:text-5xl lg:text-6xl font-bold text-uygun-black tracking-tighter leading-none">
             {{ t.STATS_LOCATION_VALUE }}
           </div>
-          <p class="mt-3 text-xs sm:text-sm text-uygun-grey uppercase tracking-wider">
+          <p class="mt-2 sm:mt-3 text-[10px] sm:text-sm text-uygun-grey uppercase tracking-wider leading-tight">
             {{ t.STATS_LOCATION_LABEL }}
           </p>
         </div>
@@ -52,7 +52,7 @@
   {% endif %}
 
   {# ── Value pillars ──────────────────────────────────────────────── #}
-  <section class="py-24 bg-white texture-noise">
+  <section class="py-16 sm:py-24 bg-white texture-noise">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
       {# Section header #}
@@ -64,10 +64,10 @@
           </span>
         </div>
         <h2 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight leading-snug max-w-lg">
-          {{ t.VALUES_TITLE_LINE_1 }}<br />
-          <span class="text-uygun-grey font-normal">{{ t.VALUES_TITLE_LINE_2 }}</span>
+          <span data-split>{{ t.VALUES_TITLE_LINE_1 }}</span><br />
+          <span class="text-uygun-grey font-normal" data-split>{{ t.VALUES_TITLE_LINE_2 }}</span>
         </h2>
-        <p class="mt-4 text-uygun-grey text-base leading-relaxed max-w-xl">
+        <p class="mt-4 text-uygun-grey text-base leading-relaxed max-w-xl" data-reveal data-reveal-from="blur" data-reveal-delay="300">
           {{ t.VALUES_INTRO }}
         </p>
       </div>
@@ -78,7 +78,7 @@
         {# Pillar 1 #}
         <div class="group p-8 rounded-2xl bg-uygun-light border border-black/[0.06] hover:shadow-hover hover:border-uygun-red/30
                     transition-all duration-300 ease-smooth hover:-translate-y-0.5"
-             data-reveal data-reveal-delay="100">
+             data-reveal data-reveal-from="up" data-reveal-delay="100">
           <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center
                       shadow-soft mb-6 group-hover:shadow-hover group-hover:scale-110 transition-all duration-300">
             <span class="w-2 h-2 rounded-full bg-uygun-red"></span>
@@ -90,7 +90,7 @@
         {# Pillar 2 #}
         <div class="group p-8 rounded-2xl bg-uygun-light border border-black/[0.06] hover:shadow-hover hover:border-uygun-red/30
                     transition-all duration-300 ease-smooth hover:-translate-y-0.5"
-             data-reveal data-reveal-delay="200">
+             data-reveal data-reveal-from="scale" data-reveal-delay="220">
           <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center
                       shadow-soft mb-6 group-hover:shadow-hover group-hover:scale-110 transition-all duration-300">
             <span class="w-2 h-2 rounded-full bg-uygun-red"></span>
@@ -102,7 +102,7 @@
         {# Pillar 3 #}
         <div class="group p-8 rounded-2xl bg-uygun-light border border-black/[0.06] hover:shadow-hover hover:border-uygun-red/30
                     transition-all duration-300 ease-smooth hover:-translate-y-0.5"
-             data-reveal data-reveal-delay="300">
+             data-reveal data-reveal-from="up" data-reveal-delay="340">
           <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center
                       shadow-soft mb-6 group-hover:shadow-hover group-hover:scale-110 transition-all duration-300">
             <span class="w-2 h-2 rounded-full bg-uygun-red"></span>
@@ -122,7 +122,7 @@
   </svg>
 
   {# ── Featured products ──────────────────────────────────────────── #}
-  <section class="py-24 bg-uygun-light">
+  <section class="py-16 sm:py-24 bg-uygun-light">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12" data-reveal>
@@ -133,7 +133,7 @@
               {{ t.FEATURED_EYEBROW }}
             </span>
           </div>
-          <h2 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight">
+          <h2 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight" data-split>
             {{ t.FEATURED_TITLE }}
           </h2>
         </div>
@@ -164,7 +164,7 @@
   </svg>
 
   {# ── Latest posts ───────────────────────────────────────────────── #}
-  <section class="py-24 bg-white">
+  <section class="py-16 sm:py-24 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12" data-reveal>
@@ -175,7 +175,7 @@
               {{ t.POSTS_EYEBROW }}
             </span>
           </div>
-          <h2 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight">
+          <h2 class="text-3xl sm:text-4xl font-bold text-uygun-black tracking-tight" data-split>
             {{ t.POSTS_TITLE }}
           </h2>
         </div>
@@ -200,7 +200,7 @@
   </section>
 
   {# ── CTA strip ──────────────────────────────────────────────────── #}
-  <section class="py-24 bg-uygun-black">
+  <section class="py-16 sm:py-24 bg-uygun-black">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
       <div class="flex items-center justify-center gap-2 mb-6" data-reveal>
@@ -211,11 +211,11 @@
       </div>
 
       <h2 class="text-4xl sm:text-5xl font-bold text-white tracking-tight leading-tight mb-2 max-w-2xl mx-auto"
-          data-reveal data-reveal-delay="100">
+          data-split>
         {{ t.CTA_STRIP_TITLE_1 }}
       </h2>
       <h2 class="text-4xl sm:text-5xl font-bold text-white/30 tracking-tight leading-tight mb-6 max-w-2xl mx-auto"
-          data-reveal data-reveal-delay="200">
+          data-reveal data-reveal-from="blur" data-reveal-delay="240">
         {{ t.CTA_STRIP_TITLE_2 }}
       </h2>
 
@@ -226,7 +226,7 @@
 
       <div class="flex flex-wrap justify-center gap-3" data-reveal data-reveal-delay="500">
         <a href="/products"
-           class="cta-glow inline-flex items-center gap-2 px-6 py-3 rounded-full bg-uygun-red text-white text-sm font-semibold
+           class="magnetic cta-glow inline-flex items-center gap-2 px-6 py-3 rounded-full bg-uygun-red text-white text-sm font-semibold
                   hover:bg-uygun-dark transition-all duration-300 ease-smooth shadow-soft hover:shadow-hover group">
           {{ t.CTA_PRIMARY }}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"

@@ -1,0 +1,14 @@
+code,name,category,match,confidence,image_subject,reason,quarantined
+1,საბურავის ლატკა MU A0 CIVI DELIGI YAMASI000,საბურავის,True,100,Maruni MU-A0 Universal Tire Patch,"The image perfectly matches the product name and code, depic",False
+10,საბურავის ლატკა MR 18 RADYAL YAMASI,საბურავის,True,100,Maruni MR-18 radial tire patch and box,"The image perfectly matches the product name and code, showi",False
+100,ბალანსირების ჩაქუჩი BALANS KURSUN CEKICI 1.KALITE,ბალანსირების,True,100,wheel weight balancing pliers and hammer,The image depicts a professional wheel weight tool (balancin,False
+101,საბურავის ბალანსირების დანადგარის ნაწილი BALANS MAKINASI KELEBEGI CAP 36 VE 38,საბურავის,True,85,Wheel balancing machine,The image shows a complete wheel balancing machine (Balans M,False
+102,ბრტყელტუჩა BALANS MAKINA CETVELI,ბრტყელტუჩა,False,95,Wheel balancing machine (Balans makinesi,"The image shows a wheel balancing machine (Aproli APL-1120),",True
+103,ა/მ საბურავის პიპკა (სარქველი) 55 MM OTOBUS-KAMYON DUBLEKS SUBAP,ა/მ,False,95,Heavy truck or bus tires,The product name is for a 55mm tubeless valve stem (subap/pi,True
+104,საბურავის პიპკა 70 MM OTOBUS-KAMYON DUBLEKS SUBAP,საბურავის,False,95,Heavy truck and bus tires,The product name refers to a 70mm tubeless valve stem (subap,True
+105,ა/მ საბურავის პიპკა 90 MM OTOBUS-KAMYON DUBLEKS SUBAP,ა/მ,False,95,Heavy truck/bus tires,The product name refers to a tubeless valve stem (subap/პიპკ,True
+106,ა/მ საბურავის პიპკა 115 MM OTOBUS-KAMYON DUBLEKS SUBAP,ა/მ,False,95,Heavy truck and bus tires,The product name refers to a 115mm tubeless valve stem (suba,True
+107,TR 218 A LASTIK SOGUK TABANLI TRAKTOR SUBAP,TR,True,85,Traktor subap (tractor tire valves) in p,"The image shows a sealed bag containing metal tire valves, w",False
+108,ა/მ საბურავის პიპკა METAL TAKSI SUBAP,ა/მ,True,85,Metal tire valves (subap) in a plastic p,The image shows a sealed package containing metal tire valve,False
+11,საბურავის ლატკა MR 20 RADYAL YAMASI,საბურავის,True,95,Maruni GNR-20 radial tire repair patches,The image shows Maruni GNR-20 radial tire patches and their ,False
+110,ა/მ საბურავის პიპკა TR 415 DUBLEKS SUBAP,ა/მ,True,100,Tubeless tire valve stem (TR415) with ca,The image perfectly depicts a tubeless rubber snap-in tire v,False

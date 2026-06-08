@@ -15,7 +15,7 @@
   <meta property="og:description" content="{% block og_description %}ვულკანიზაცია და ავტოქიმია — ბათუმი{% endblock %}" />
   <meta property="og:locale" content="{{ t.HTML_LANG }}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" href="/assets/brand/logo.png" type="image/png" />
+  <link rel="icon" href="/static/brand/logo.png" type="image/png" />
 
   {# ── JSON-LD structured data (Google rich results) ─────────────── #}
   {% block jsonld %}
@@ -25,7 +25,7 @@
     "@type": "LocalBusiness",
     "@id": "https://uygun.ge/#business",
     "name": "Uygun Georgia",
-    "image": "/assets/brand/logo.png",
+    "image": "/static/brand/logo.png",
     "telephone": "{{ brand.CONTACT_PHONE }}",
     "email": "info@uygun.ge",
     "url": "https://uygun.ge/",
@@ -142,13 +142,41 @@
     /* ── Gradient text — used on hero H1 line 1 ──────────────────────
        White → soft red bottom shimmer; stays legible at all weights. */
     .text-gradient-brand {
-      background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 55%, #ff6b6e 100%);
+      background-image: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 45%, #BC1215 105%);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
     }
     .dark .text-gradient-brand {
       background-image: linear-gradient(135deg, #ffffff 0%, #ffffff 50%, #ff7a7d 100%);
+    }
+
+    /* ── Hero texture — flip pattern per theme ──────────────────────
+       Light: very faint dots (more breathable, modern). Dark: line grid
+       (kept from the original). Both use 48px spacing so the gridDrift
+       keyframe (0→48px) loops seamlessly. Opacity tuned per theme.    */
+    .hero-grid {
+      background-image: radial-gradient(rgba(15,15,15,0.10) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    .dark .hero-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* ── Hero ambient gradient — soft warm backdrop for light mode ─── */
+    .hero-ambient {
+      background:
+        radial-gradient(ellipse 90% 70% at 80% 20%, rgba(188,18,21,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 60% at 10% 90%, rgba(188,18,21,0.04) 0%, transparent 55%),
+        linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    }
+    .dark .hero-ambient {
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 50%, rgba(188,18,21,0.06) 0%, transparent 70%),
+        linear-gradient(180deg, #0F0F0F 0%, #0F0F0F 100%);
     }
 
     /* ── Mouse spotlight — hero ambient interactive glow ──────────────
@@ -161,13 +189,21 @@
       inset: 0;
       pointer-events: none;
       background: radial-gradient(
+        circle 520px at var(--spot-x, 30%) var(--spot-y, 40%),
+        rgba(188,18,21,0.07) 0%,
+        rgba(188,18,21,0.03) 35%,
+        transparent 65%
+      );
+      transition: background 0.4s ease-out;
+      z-index: 1;
+    }
+    .dark .spotlight-host::before {
+      background: radial-gradient(
         circle 480px at var(--spot-x, 30%) var(--spot-y, 40%),
         rgba(188,18,21,0.10) 0%,
         rgba(188,18,21,0.04) 35%,
         transparent 65%
       );
-      transition: background 0.25s ease-out;
-      z-index: 1;
     }
 
     /* ── Primary CTA glow halo — on hover ─────────────────────────── */
@@ -212,6 +248,34 @@
       color: rgba(0,0,0,0.06);
     }
     .dark .divider-slash { color: rgba(255,255,255,0.06); }
+
+    /* ── Hero scroll cue — minimal vertical line with traveling dot ─
+       Replaces the mouse-shape SVG. Reads as elegant on desktop and
+       avoids the "mouse" metaphor that's meaningless on mobile/touch. */
+    .scroll-cue-track {
+      position: relative;
+      width: 1px;
+      height: 36px;
+      background-color: currentColor;
+      opacity: 0.22;
+      overflow: hidden;
+    }
+    .scroll-cue-drip {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1px;
+      height: 12px;
+      background-color: currentColor;
+      transform: translateY(-100%);
+      animation: scrollDrip 1.9s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+    }
+    @keyframes scrollDrip {
+      0%   { transform: translateY(-100%); opacity: 0; }
+      18%  { opacity: 1; }
+      82%  { opacity: 1; }
+      100% { transform: translateY(36px);  opacity: 0; }
+    }
 
     /* ── Smooth theme transition — crossfade colors when toggling ─── */
     html.theme-anim,
@@ -477,7 +541,7 @@
         <div class="space-y-4">
           <div class="flex items-center gap-3">
             {# Decorative: brand text appears next to logo, so logo alt is empty (WCAG 1.1.1) #}
-            <img src="/assets/brand/logo.png" alt=""
+            <img src="/static/brand/logo.png" alt=""
                  width="40" height="40" loading="lazy" decoding="async"
                  class="h-10 w-10 rounded-full object-cover" />
             <span class="font-semibold text-lg tracking-tight">Uygun Georgia</span>
@@ -549,7 +613,7 @@
           <div class="flex items-center gap-2 pt-2">
             <a href="{{ brand.FACEBOOK_URL }}" target="_blank" rel="noopener"
                aria-label="Facebook"
-               class="w-9 h-9 rounded-full bg-white/5 hover:bg-[#1877F2]/15 border border-white/10 hover:border-[#1877F2]/40
+               class="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-[#1877F2]/15 border border-white/10 hover:border-[#1877F2]/40
                       flex items-center justify-center text-white/60 hover:text-white
                       transition-all duration-200 hover:scale-110 hover:-translate-y-0.5">
               <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
@@ -558,7 +622,7 @@
             </a>
             <a href="{{ brand.INSTAGRAM_URL }}" target="_blank" rel="noopener"
                aria-label="Instagram"
-               class="w-9 h-9 rounded-full bg-white/5 hover:bg-uygun-red/15 border border-white/10 hover:border-uygun-red/40
+               class="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-uygun-red/15 border border-white/10 hover:border-uygun-red/40
                       flex items-center justify-center text-white/60 hover:text-white
                       transition-all duration-200 hover:scale-110 hover:-translate-y-0.5">
               <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
