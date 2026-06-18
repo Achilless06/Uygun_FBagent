@@ -355,10 +355,10 @@ async def fsm_edit_feedback(message: Message, state: FSMContext) -> None:
     placeholder = await message.answer(messages.PREVIEW_REGENERATING)
     try:
         new_post = await _regenerate_with_feedback(old_slot, feedback)
-    except Exception:
+    except Exception as exc:
         log.exception("regenerate_failed")
         try:
-            await placeholder.edit_text(messages.GENERATE_FAILED)
+            await placeholder.edit_text(messages.generate_failed_message(exc))
         except Exception:
             pass
         return
@@ -390,11 +390,11 @@ async def handle_draft_reject(callback: CallbackQuery) -> None:
             old_slot,
             "წინა draft არ მოეწონა — ცადე სრულიად განსხვავებული მიდგომა (სხვა hook, სხვა angle).",
         )
-    except Exception:
+    except Exception as exc:
         log.exception("regenerate_failed")
         if placeholder:
             try:
-                await placeholder.edit_text(messages.GENERATE_FAILED)
+                await placeholder.edit_text(messages.generate_failed_message(exc))
             except Exception:
                 pass
         return

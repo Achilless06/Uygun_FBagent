@@ -568,15 +568,16 @@ async def _run_generate_and_preview(
 
     try:
         post = await asyncio.to_thread(_gen)
-    except Exception:
+    except Exception as exc:
         log.exception("generate_failed")
+        text = messages.generate_failed_message(exc)
         if placeholder_msg:
             try:
-                await placeholder_msg.edit_text(messages.GENERATE_FAILED)
+                await placeholder_msg.edit_text(text)
             except Exception:
                 pass
         else:
-            await bot.send_message(chat_id, messages.GENERATE_FAILED)
+            await bot.send_message(chat_id, text)
         return
 
     draft_id = approval._persist_draft(post)

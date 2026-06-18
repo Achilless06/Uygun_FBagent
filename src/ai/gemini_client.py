@@ -38,6 +38,31 @@ from src.logging_setup import get_logger
 
 log = get_logger(__name__)
 
+
+def classify_api_error(exc: BaseException) -> str:
+    """Classify a Google/Gemini API exception for founder-facing messaging.
+
+    The generator swallows the raw exception and only logs it; this lets the
+    Telegram layer show a message the founder can act on instead of a generic
+    "see the logs". Returns one of:
+
+      "overloaded" — HTTP 503 / UNAVAILABLE: transient Google demand spike,
+                     retrying in a few minutes succeeds.
+      "quota"      — HTTP 429 / RESOURCE_EXHAUSTED: prepaid credits or rate
+                     quota depleted — needs a billing top-up, not a retry.
+      "other"      — anything else (treat as a generic failure).
+    """
+    from google.genai import errors as genai_errors
+
+    if isinstance(exc, genai_errors.APIError):
+        code = getattr(exc, "code", None)
+        status = (getattr(exc, "status", "") or "").upper()
+        if code == 503 or status == "UNAVAILABLE":
+            return "overloaded"
+        if code == 429 or status == "RESOURCE_EXHAUSTED":
+            return "quota"
+    return "other"
+
 PRICE_INPUT_PER_M = 0.30
 PRICE_OUTPUT_PER_M = 2.50
 

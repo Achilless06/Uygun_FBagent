@@ -317,7 +317,38 @@ GENERATE_USAGE = (
     "_სლოტები: Daily, B2B, B2C, EDU, BTS, LITE, Promo_"
 )
 GENERATE_FAILED = "❌ გენერაცია ვერ მოხერხდა. დეტალები ლოგებშია."
+# Gemini 503 / UNAVAILABLE — Google-side demand spike. Transient: retrying in a
+# few minutes succeeds, so we say that instead of the opaque "see the logs".
+GENERATE_FAILED_OVERLOADED = (
+    "❌ გენერაცია დროებით ვერ მოხერხდა —\n"
+    "Google-ის სერვერი გადატვირთულია.\n"
+    "სცადეთ ხელახლა რამდენიმე წუთში. 🔄"
+)
+# Gemini 429 / RESOURCE_EXHAUSTED — prepaid credits or quota depleted. Needs a
+# billing top-up, not a retry; point the founder at the action.
+GENERATE_FAILED_QUOTA = (
+    "❌ გენერაცია ვერ მოხერხდა —\n"
+    "Gemini-ის კრედიტი ან ლიმიტი ამოიწურა.\n"
+    "შეამოწმეთ ბილინგი Google AI Studio-ზე."
+)
 GENERATE_INVALID_SLOT = "❌ უცნობი სლოტი. სცადე: Daily / B2B / B2C / EDU / BTS / LITE / Promo"
+
+
+def generate_failed_message(exc: BaseException) -> str:
+    """Pick the founder-facing generation-failure message for an exception.
+
+    Distinguishes a transient Google overload (retry) from depleted Gemini
+    credits/quota (billing action) so the founder knows what to do; falls back
+    to the generic message for anything else.
+    """
+    from src.ai.gemini_client import classify_api_error
+
+    kind = classify_api_error(exc)
+    if kind == "overloaded":
+        return GENERATE_FAILED_OVERLOADED
+    if kind == "quota":
+        return GENERATE_FAILED_QUOTA
+    return GENERATE_FAILED
 
 # Preview message — sent as a caption when there's an image, or as a plain
 # message when no image. Caption limit on Telegram is 1024 chars.
