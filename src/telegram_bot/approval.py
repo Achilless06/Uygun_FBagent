@@ -464,6 +464,7 @@ def _generate_with_violation(slot: str, seed_violation: guardrails.Violation) ->
                 product_code=product.code,
                 product_name=product.name,
                 price=product.price,
+                display_name=db.product_display_name(product),
             )
             if overlay_path:
                 image_path = overlay_path
@@ -474,7 +475,7 @@ def _generate_with_violation(slot: str, seed_violation: guardrails.Violation) ->
         try:
             image_path = generator.render_text_card_for_product(
                 product_code=product.code,
-                product_name=product.name,
+                product_name=db.product_display_name(product),
                 price=product.price,
             )
             image_source = "text_card"
@@ -487,7 +488,7 @@ def _generate_with_violation(slot: str, seed_violation: guardrails.Violation) ->
         hashtags=hashtags,
         cta=brief.cta,
         featured_product_code=product.code if product else None,
-        featured_product_name=product.name if product else None,
+        featured_product_name=db.product_display_name(product) if product else None,
         featured_product_price=product.price if product else None,
         image_path=image_path,
         image_source=image_source,

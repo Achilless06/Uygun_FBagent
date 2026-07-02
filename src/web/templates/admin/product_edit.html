@@ -20,10 +20,19 @@
       class="max-w-2xl bg-white rounded-2xl border border-black/[0.07] shadow-card p-6 sm:p-8 space-y-6">
 
   <div>
-    <label for="f-name" class="block text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">სახელი</label>
+    <label for="f-name" class="block text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">სახელი (მომწოდებლის)</label>
     <input type="text" id="f-name" name="name" value="{{ product.name }}" required maxlength="200"
            class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white
                   focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    <p class="mt-1 text-xs text-uygun-grey">გამოიყენება ფოტოს ძიებაში — ნუ თარგმნით</p>
+  </div>
+
+  <div>
+    <label for="f-name-ka" class="block text-xs font-semibold uppercase tracking-widest text-uygun-grey mb-2">ქართული სახელი</label>
+    <input type="text" id="f-name-ka" name="name_ka" value="{{ product.name_ka or '' }}" maxlength="200"
+           class="w-full px-3 py-2 text-base border border-black/[0.1] rounded-lg bg-white
+                  focus:outline-none focus:ring-2 focus:ring-uygun-red/30 focus:border-uygun-red transition-all duration-200" />
+    <p class="mt-1 text-xs text-uygun-grey">ჩანს საიტზე და FB პოსტებში · ცარიელი = მომწოდებლის სახელი</p>
   </div>
 
   <div class="grid grid-cols-2 gap-4">

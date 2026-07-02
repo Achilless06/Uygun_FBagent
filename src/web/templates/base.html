@@ -23,12 +23,11 @@
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": "https://uygun.ge/#business",
+    "@id": "{{ brand.SITE_URL }}/#business",
     "name": "Uygun Georgia",
-    "image": "/static/brand/logo.png",
+    "image": "{{ brand.SITE_URL }}/static/brand/logo.png",
     "telephone": "{{ brand.CONTACT_PHONE }}",
-    "email": "info@uygun.ge",
-    "url": "https://uygun.ge/",
+    "url": "{{ brand.SITE_URL }}/",
     "priceRange": "₾₾",
     "address": {
       "@type": "PostalAddress",
@@ -80,41 +79,10 @@
     rel="stylesheet"
   />
 
-  {# Tailwind CDN — pinned to v3.4.16. CDN is a Tailwind-known DX choice
-     (warns in console for prod), but works fine for our traffic level.
-     Pinning means a future Tailwind v4 won't silently break us. #}
-  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            'uygun-red':   '#BC1215',
-            'uygun-dark':  '#7A0C0E',
-            'uygun-black': '#0F0F0F',
-            'uygun-grey':  '#555555',
-            'uygun-light': '#F5F5F5',
-          },
-          fontFamily: {
-            sans: ['Inter', 'Noto Sans Georgian', 'system-ui', 'sans-serif'],
-          },
-          letterSpacing: {
-            tighter: '-0.04em',
-            tight:   '-0.025em',
-          },
-          boxShadow: {
-            'soft':  '0 1px 2px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.06)',
-            'hover': '0 1px 2px rgba(0,0,0,0.08), 0 24px 64px rgba(0,0,0,0.10)',
-            'card':  '0 0 0 1px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.06)',
-          },
-          transitionTimingFunction: {
-            'smooth': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          },
-        },
-      },
-    };
-  </script>
+  {# Tailwind — compiled at build time (tailwind.config.js → static/css/tw.css,
+     pinned 3.4.16; rebuild command lives in tailwind.config.js). Replaced the
+     CDN runtime (~350KB JS on first paint) with 39KB of static CSS. #}
+  <link rel="stylesheet" href="/static/css/tw.css?v=20260702" />
 
   <style>
     /* Base font rendering */

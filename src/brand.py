@@ -160,6 +160,11 @@ CONTACT_WHATSAPP_URL = "https://wa.me/995568909087"  # for href="https://..."
 FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61572328379507"
 INSTAGRAM_URL = "https://www.instagram.com/uygungeorgia/"
 
+# Canonical public website origin — founder-confirmed 2026-07: uygungeorgia.com
+# (NOT uygun.ge, which was never registered). Used by JSON-LD structured data
+# and any template that needs an absolute URL.
+SITE_URL = "https://uygungeorgia.com"
+
 CONTACT_BLOCK = f"📞 {CONTACT_PHONE}\n📍 {CONTACT_ADDRESS}"
 
 # ─── 9. Brand voice rules (brandbook p. 10-12) ───────────────────────────────

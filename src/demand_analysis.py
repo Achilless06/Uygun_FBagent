@@ -178,7 +178,7 @@ def analyze_top_sellers(
         ranked.append(TopSeller(
             rank=i,
             code=code,
-            name=(p.name if p else "?"),
+            name=(db.product_display_name(p) if p else "?"),
             qty=qty,
             revenue=round(rev, 2),
             avg_unit_price=round(avg_p, 3),

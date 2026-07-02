@@ -106,7 +106,7 @@
 </header>
 
 {# ── Hero section ────────────────────────────────────────────────── #}
-<section class="spotlight-host hero-ambient relative h-screen min-h-[600px] flex flex-col justify-center overflow-hidden transition-colors duration-500 ease-smooth">
+<section class="spotlight-host hero-ambient relative h-svh min-h-[600px] flex flex-col justify-center overflow-hidden transition-colors duration-500 ease-smooth">
 
   {# Subtle background texture — dots in light mode, line grid in dark — drifts slowly + scroll-linked vertical float #}
   <div class="absolute inset-0 opacity-100 grid-drift hero-grid"
@@ -132,7 +132,7 @@
     {# Two-line heading — stagger between the two lines #}
     <h1 class="text-[2.75rem] sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.05] sm:leading-none mb-6 max-w-4xl text-center sm:text-left">
       <span class="block text-gradient-brand" data-reveal data-reveal-delay="100">{{ t.HERO_HEADING_1 }}</span>
-      <span class="block text-uygun-black/25 dark:text-white/40 mt-1" data-reveal data-reveal-delay="250">{{ t.HERO_HEADING_2 }}</span>
+      <span class="block text-uygun-black/50 dark:text-white/40 mt-1" data-reveal data-reveal-delay="250">{{ t.HERO_HEADING_2 }}</span>
     </h1>
 
     {# Subtitle — /70 for WCAG AA 4.5:1 contrast #}

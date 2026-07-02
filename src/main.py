@@ -79,6 +79,7 @@ async def _main() -> None:
     db.init_engine(cfg.database_url)
     db.create_all()
     db.seed_default_settings()
+    db.apply_name_ka_seed()
 
     await asyncio.gather(_run_bot(cfg), _run_web())
 

@@ -83,6 +83,7 @@ async def product_edit_submit(
     request: Request,
     code: str,
     name: str = Form(...),
+    name_ka: str = Form(""),
     price: str = Form(""),
     stock_qty: int = Form(0),
     category: str = Form(""),
@@ -101,6 +102,7 @@ async def product_edit_submit(
     ok = db.update_product(
         code,
         name=name,
+        name_ka=name_ka,
         price=parsed_price,
         stock_qty=stock_qty,
         category=category,

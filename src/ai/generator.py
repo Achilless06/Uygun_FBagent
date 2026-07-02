@@ -238,8 +238,8 @@ def _format_product_candidates(products: list[db.Product]) -> str:
     lines = []
     for p in products:
         price_str = f"{p.price:g} ₾" if p.price else "—"
-        # Keep each line short for the prompt.
-        name = p.name[:50] if p.name else "(უსახელო)"
+        # Keep each line short for the prompt. Georgian display name when available.
+        name = db.product_display_name(p)[:50] if p.name else "(უსახელო)"
         lines.append(f"- `{p.code}` · {name} · {price_str}")
     return "\n".join(lines)
 
@@ -308,7 +308,7 @@ def _format_product_block(product: Optional[db.Product]) -> str:
     return (
         f"ფეიჩერ პროდუქცია:\n"
         f"- კოდი: `{product.code}`\n"
-        f"- სახელწოდება: {product.name}\n"
+        f"- სახელწოდება: {db.product_display_name(product)}\n"
         f"- ფასი: {price_str}\n"
         f"- მარაგი: {stock_str}\n"
     )
@@ -490,9 +490,16 @@ def render_text_card_for_product(
 
 
 def find_and_overlay_photo(
-    product_code: str, product_name: str, price: Optional[float]
+    product_code: str,
+    product_name: str,
+    price: Optional[float],
+    display_name: Optional[str] = None,
 ) -> Optional[str]:
     """Web-search for a product photo, apply marketing overlay, return the path.
+
+    `product_name` must stay the RAW supplier name — the image search keys off
+    its Latin/digit tokens. `display_name` (Georgian) is what gets rendered on
+    the overlay; falls back to `product_name` when not provided.
 
     Returns None if the search finds nothing usable. The caller falls back
     to render_text_card_for_product in that case.
@@ -512,7 +519,7 @@ def find_and_overlay_photo(
         image_gen.apply_marketing_overlay(
             source_path=raw,
             output_path=overlaid,
-            product_name=product_name,
+            product_name=display_name or product_name,
             price=price,
         )
     except Exception:
@@ -613,6 +620,7 @@ def generate_draft_for_slot(
                 product_code=product.code,
                 product_name=product.name,
                 price=product.price,
+                display_name=db.product_display_name(product),
             )
             if overlay_path:
                 image_path = overlay_path
@@ -625,7 +633,7 @@ def generate_draft_for_slot(
         try:
             image_path = render_text_card_for_product(
                 product_code=product.code,
-                product_name=product.name,
+                product_name=db.product_display_name(product),
                 price=product.price,
             )
             image_source = "text_card"
@@ -638,7 +646,7 @@ def generate_draft_for_slot(
         hashtags=hashtags,
         cta=brief.cta,
         featured_product_code=product.code if product else None,
-        featured_product_name=product.name if product else None,
+        featured_product_name=db.product_display_name(product) if product else None,
         featured_product_price=product.price if product else None,
         image_path=image_path,
         image_source=image_source,

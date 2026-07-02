@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% set active = "products" %}
 
-{% block title %}{{ product.name }} — Uygun Georgia{% endblock %}
-{% block og_title %}{{ product.name }} — Uygun Georgia{% endblock %}
+{% block title %}{{ display_name(product) }} — Uygun Georgia{% endblock %}
+{% block og_title %}{{ display_name(product) }} — Uygun Georgia{% endblock %}
 {% block og_type %}product{% endblock %}
 
 {% block jsonld %}
@@ -11,10 +11,11 @@
 {
   "@context": "https://schema.org",
   "@type": "Product",
-  "name": "{{ product.name | replace('"', '\\"') }}",
+  "name": "{{ display_name(product) | replace('"', '\\"') }}",
   "sku": "{{ product.code }}",
   {% if product.category %}"category": "{{ product.category | replace('"', '\\"') }}",{% endif %}
-  {% if product.has_photo %}"image": "/assets/uploaded/{{ product.code | urlencode }}.jpg",{% endif %}
+  {% if product.has_photo %}"image": "{{ brand.SITE_URL }}/assets/uploaded/{{ product.code | urlencode }}.jpg",{% endif %}
+  "url": "{{ brand.SITE_URL }}/products/{{ product.code | urlencode }}",
   "brand": { "@type": "Brand", "name": "Uygun Georgia" },
   "offers": {
     "@type": "Offer",
@@ -30,9 +31,9 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type":"ListItem","position":1,"name":"{{ t.NAV_HOME }}","item":"/"},
-    {"@type":"ListItem","position":2,"name":"{{ t.NAV_PRODUCTS }}","item":"/products"},
-    {"@type":"ListItem","position":3,"name":"{{ product.name | replace('"', '\\"') }}","item":"/products/{{ product.code | urlencode }}"}
+    {"@type":"ListItem","position":1,"name":"{{ t.NAV_HOME }}","item":"{{ brand.SITE_URL }}/"},
+    {"@type":"ListItem","position":2,"name":"{{ t.NAV_PRODUCTS }}","item":"{{ brand.SITE_URL }}/products"},
+    {"@type":"ListItem","position":3,"name":"{{ display_name(product) | replace('"', '\\"') }}","item":"{{ brand.SITE_URL }}/products/{{ product.code | urlencode }}"}
   ]
 }
 </script>
@@ -51,7 +52,7 @@
         <span class="text-black/20" aria-hidden="true">/</span>
         <a href="/products" class="hover:text-uygun-black transition-colors duration-200">{{ t.NAV_PRODUCTS }}</a>
         <span class="text-black/20" aria-hidden="true">/</span>
-        <span class="text-uygun-black font-medium truncate max-w-xs" aria-current="page">{{ product.name }}</span>
+        <span class="text-uygun-black font-medium truncate max-w-xs" aria-current="page">{{ display_name(product) }}</span>
       </nav>
     </div>
   </div>
@@ -65,7 +66,7 @@
         <div class="relative rounded-2xl overflow-hidden bg-uygun-light aspect-square lg:aspect-auto lg:min-h-[480px]"
              data-reveal>
           <img src="/assets/uploaded/{{ product.code | urlencode }}.jpg?v={{ product.updated_at | int_ts }}"
-               alt="{{ product.name }}"
+               alt="{{ display_name(product) }}"
                width="800" height="800" decoding="async" fetchpriority="high"
                class="w-full h-full object-contain p-8 transition-transform duration-700 ease-smooth hover:scale-[1.04]" />
         </div>
@@ -91,10 +92,11 @@
 
         {# Central typographic content #}
         <div class="relative z-10 text-center px-8 py-12">
-          {# Giant code display #}
-          <div class="text-8xl sm:text-9xl font-bold text-white/[0.07] tracking-tighter leading-none mb-6 mono select-none">
-            {{ product.code }}
-          </div>
+          {# Brand mark — founder-preferred placeholder when no photo #}
+          <img src="/static/brand/logo.png" alt=""
+               width="112" height="112" decoding="async" fetchpriority="high"
+               class="mx-auto w-28 h-28 rounded-full object-cover opacity-90
+                      ring-1 ring-white/10 shadow-soft mb-6 select-none" />
 
           {# Category pill #}
           {% if product.category %}
@@ -104,10 +106,8 @@
             </div>
           {% endif %}
 
-          {# Brand mark #}
-          <div class="flex items-center justify-center gap-2 mt-6">
-            <img src="/static/brand/logo.png" alt="Uygun Georgia"
-                 class="h-7 w-7 rounded-full object-cover opacity-60" />
+          {# Brand wordmark caption #}
+          <div class="flex items-center justify-center mt-6">
             <span class="text-white/30 text-xs font-medium tracking-wider">UYGUN GEORGIA</span>
           </div>
         </div>
@@ -130,7 +130,7 @@
         {# Product name #}
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-uygun-black tracking-tight leading-tight"
             data-reveal data-reveal-delay="160">
-          {{ product.name }}
+          {{ display_name(product) }}
         </h1>
 
         {# Stock status — animated count for stock qty #}
@@ -174,7 +174,7 @@
             </svg>
             {{ t.PRODUCT_CTA_CALL }}
           </a>
-          <a href="{{ brand.CONTACT_WHATSAPP_URL }}?text={{ (t.PRODUCT_CTA_WHATSAPP_PREFIX + ' ' + product.name + ' (' + product.code + ')') | urlencode }}"
+          <a href="{{ brand.CONTACT_WHATSAPP_URL }}?text={{ (t.PRODUCT_CTA_WHATSAPP_PREFIX + ' ' + display_name(product) + ' (' + product.code + ')') | urlencode }}"
              target="_blank" rel="noopener"
              class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full
                     border border-black/[0.1] text-uygun-black text-sm font-medium

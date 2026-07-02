@@ -21,9 +21,11 @@ Schema changes in prod: add an Alembic migration (deferred until needed).
 
 from __future__ import annotations
 
+import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
 
 from sqlalchemy import (
@@ -69,6 +71,11 @@ class Product(Base):
     # Queries order by `(code_sort ASC NULLS LAST, code ASC)` for "1, 2, ..., 10, 11, ..., ც".
     code_sort: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
+    # Georgian display name (Phase 19, 2026-07) — AI-translated from the raw
+    # supplier name, seeded from assets/product_names_ka.json at startup.
+    # NULL → UI falls back to `name`. Keep `name` itself verbatim: photo search
+    # tokenizes its Latin fragments and sales-import reporting reads it.
+    name_ka: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     # NULL or 0 = "ask for price" — agent must not invent a number.
     price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     # Default 1 = in stock; toggle to 0 via Telegram /toggle_stock.
@@ -302,7 +309,28 @@ def init_engine(database_url: str) -> Engine:
     global _engine, _SessionLocal
     _engine = create_engine(database_url, echo=False, future=True)
     _SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False)
+    _run_light_migrations(_engine)
     return _engine
+
+
+def _run_light_migrations(engine: Engine) -> None:
+    """Additive column patches for DBs created before a model gained a column.
+
+    `create_all()` only creates missing *tables* — an existing prod DB never
+    picks up new model columns, and every SELECT on the table would break.
+    Runs at init_engine() time so all three entrypoints (main, bot-only,
+    web-only) converge. Idempotent; inspection + plain ADD COLUMN keeps it
+    SQLite- and Postgres-compatible.
+    """
+    from sqlalchemy import inspect as _inspect
+
+    inspector = _inspect(engine)
+    if "products" not in inspector.get_table_names():
+        return  # fresh DB — create_all() builds the full schema from the model
+    cols = {c["name"] for c in inspector.get_columns("products")}
+    if "name_ka" not in cols:
+        with engine.begin() as conn:
+            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN name_ka VARCHAR")
 
 
 def create_all() -> None:
@@ -310,6 +338,50 @@ def create_all() -> None:
     if _engine is None:
         raise RuntimeError("init_engine() must be called first")
     Base.metadata.create_all(_engine)
+
+
+_NAME_KA_SEED_PATH = Path(__file__).resolve().parent.parent / "assets" / "product_names_ka.json"
+
+
+def apply_name_ka_seed(seed_path: Optional[Path] = None) -> int:
+    """Backfill `products.name_ka` from the bundled translation seed file.
+
+    assets/product_names_ka.json ({code: georgian_name}) is generated once by
+    scripts/georgianize_names.py and committed to git — prod converges on the
+    next deploy with no manual step. Fills only NULL/empty rows, so a founder
+    edit via /admin/products always wins. Returns the number of rows updated.
+    """
+    path = seed_path or _NAME_KA_SEED_PATH
+    if not path.exists():
+        return 0
+    from src.logging_setup import get_logger  # deferred: avoids import cycle
+
+    log = get_logger(__name__)
+    try:
+        mapping: dict[str, str] = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        log.exception("name_ka_seed_unreadable", path=str(path))
+        return 0
+    updated = 0
+    with session_scope() as s:
+        rows = (
+            s.query(Product)
+            .filter(or_(Product.name_ka.is_(None), Product.name_ka == ""))
+            .all()
+        )
+        for p in rows:
+            ka = mapping.get(p.code)
+            if ka and ka.strip():
+                p.name_ka = ka.strip()
+                updated += 1
+    if updated:
+        log.info("name_ka_seed_applied", rows=updated)
+    return updated
+
+
+def product_display_name(p: Product) -> str:
+    """Customer-facing product name — Georgian translation when available."""
+    return p.name_ka or p.name
 
 
 def seed_default_settings() -> None:
@@ -628,7 +700,13 @@ def list_products_paginated(
             q = q.filter(Product.category == category)
         if search:
             like = f"%{search.strip()}%"
-            q = q.filter(or_(Product.name.ilike(like), Product.code.ilike(like)))
+            q = q.filter(
+                or_(
+                    Product.name.ilike(like),
+                    Product.name_ka.ilike(like),
+                    Product.code.ilike(like),
+                )
+            )
         if has_photo is not None:
             q = q.filter(Product.has_photo == has_photo)
         total = q.count()
@@ -739,6 +817,7 @@ def update_product(
     code: str,
     *,
     name: Optional[str] = None,
+    name_ka: Optional[str] = None,
     price: Optional[float] = None,
     stock_qty: Optional[int] = None,
     category: Optional[str] = None,
@@ -751,6 +830,9 @@ def update_product(
             return False
         if name is not None:
             p.name = name.strip()
+        if name_ka is not None:
+            # Empty string clears the translation → UI falls back to `name`.
+            p.name_ka = name_ka.strip() or None
         if price is not None:
             p.price = price if price > 0 else None
         if stock_qty is not None:

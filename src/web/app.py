@@ -40,6 +40,9 @@ from src import brand as _brand  # noqa: E402
 
 templates.env.globals["brand"] = _brand
 templates.env.globals["now"] = datetime.now  # fresh value on every render → live year
+# Customer-facing product name: Georgian translation (name_ka) with fallback
+# to the raw supplier name. Templates call {{ display_name(p) }}.
+templates.env.globals["display_name"] = db.product_display_name
 
 
 def _int_ts(value) -> int:
@@ -66,6 +69,7 @@ async def _lifespan(app: FastAPI):
         cfg = config.load()
         db.init_engine(cfg.database_url)
         db.create_all()
+        db.apply_name_ka_seed()
         log.info("web_app_initialized_db_standalone")
     yield
 

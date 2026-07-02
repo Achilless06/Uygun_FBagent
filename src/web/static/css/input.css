@@ -1,0 +1,6 @@
+/* Tailwind entrypoint — compiled to tw.css by the command in tailwind.config.js.
+   Site-specific custom CSS (dark-mode overrides, keyframes, etc.) stays in
+   base.html <style> — only Tailwind's layers are generated here. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

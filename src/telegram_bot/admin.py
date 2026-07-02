@@ -436,6 +436,7 @@ async def handle_refind_photo(message: Message, command: CommandObject) -> None:
             await message.answer(messages.REFIND_PHOTO_NOT_FOUND.format(code=_md_escape(code)))
             return
         name = product.name
+        display = db.product_display_name(product)
         price = product.price
 
     # Clear both caches: raw download + overlaid output. Both regenerate.
@@ -450,7 +451,9 @@ async def handle_refind_photo(message: Message, command: CommandObject) -> None:
     )
 
     def _refind():
-        return generator.find_and_overlay_photo(product_code=code, product_name=name, price=price)
+        return generator.find_and_overlay_photo(
+            product_code=code, product_name=name, price=price, display_name=display
+        )
 
     result = await asyncio.to_thread(_refind)
     if result:
